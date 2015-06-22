@@ -56,6 +56,7 @@ public class BsoneeGenerator {
 				.build());
 
 		bsoneeBuilder.addMethod(MethodSpec.constructorBuilder()
+				.addAnnotation(Util.suppressWarningsAnnotation(true, false))
 				.addModifiers(Modifier.PRIVATE)
 				.addParameter(typeVariable, "wrapped", Modifier.FINAL)
 				.addStatement("this.wrapped = wrapped")

@@ -67,7 +67,7 @@ public class BsoneeCodecProviderGenerator {
 
 		Builder methodSpec = MethodSpec.methodBuilder("get")
 				.addAnnotation(Override.class)
-				.addAnnotation(Util.suppressWarningsAnnotation())
+				.addAnnotation(Util.suppressWarningsAnnotation(true, false))
 				.addModifiers(Modifier.PUBLIC)
 				.addParameter(ParameterSpec.builder(clazzName, "clazz", Modifier.FINAL).build())
 				.addParameter(Util.bsonRegistryParameter())

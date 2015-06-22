@@ -16,6 +16,7 @@
 package com.sleepcamel.bsoneer.processor.util;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -297,13 +298,24 @@ public class Util {
 		return ClassName.get("org.bson.codecs.configuration", "CodecProvider");
 	}
 	
-	public static TypeName bsonTypeName(){
-		return ClassName.get("org.bson.conversions","Bson");
+	public static TypeName bsonTypeName() {
+		return ClassName.get("org.bson.conversions", "Bson");
+	}
+	
+	public static AnnotationSpec suppressWarningsAnnotation() {
+		return suppressWarningsAnnotation(true, true);
 	}
 
-	public static AnnotationSpec suppressWarningsAnnotation() {
+	public static AnnotationSpec suppressWarningsAnnotation(boolean includeUnchecked, boolean includeRawtypes) {
+		List<String> vals = new ArrayList<String>();
+		if (includeUnchecked) {
+			vals.add("\"unchecked\"");
+		}
+		if (includeRawtypes) {
+			vals.add("\"rawtypes\"");
+		}
 		return AnnotationSpec.builder(SuppressWarnings.class)
-			.addMember("value", "{\"unchecked\", \"rawtypes\"}")
+			.addMember("value", "{" + Joiner.on(", ").join(vals) + "}")
 			.build();
 	}
 }

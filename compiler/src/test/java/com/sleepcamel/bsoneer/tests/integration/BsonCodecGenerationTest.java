@@ -122,7 +122,7 @@ public final class BsonCodecGenerationTest {
         		"	 * {@inhericDoc}",
         		"	 */",
         		"	@Override",
-        		"	@SuppressWarnings({\"unchecked\", \"rawtypes\"})",
+        		"	@SuppressWarnings({\"unchecked\"})",
         		"	public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {",
         		"		if ( clazz == Person.class ) {",
         		"			return (Codec<T>) new PersonBsoneeCodec(registry);",
