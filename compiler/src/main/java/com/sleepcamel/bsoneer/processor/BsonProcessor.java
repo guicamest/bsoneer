@@ -70,7 +70,6 @@ public class BsonProcessor extends AbstractProcessor {
 		for (String c : findBsoneedClassNames(roundEnv)) {
 			TypeElement type = processingEnv.getElementUtils().getTypeElement(c);
 			try {
-//				createBsoneeClass(type).writeTo(processingEnv.getFiler());
 				createBsoneeCodecClass(type).writeTo(processingEnv.getFiler());
 				generated.add(c);
 			} catch (IOException e) {
@@ -81,6 +80,7 @@ public class BsonProcessor extends AbstractProcessor {
 			try {
 				createBsoneeCodecProviderClass().writeTo(processingEnv.getFiler());
 				createBsoneeCodecRegistryClass().writeTo(processingEnv.getFiler());
+				createBsoneeClass().writeTo(processingEnv.getFiler());
 			} catch (IOException e) {
 				error("Code gen failed: " + e, null);
 			}
@@ -156,13 +156,6 @@ public class BsonProcessor extends AbstractProcessor {
 		return hasDefaultConstructor;
 	}
 
-	private JavaFile createBsoneeClass(TypeElement type) {
-		processingEnv.getMessager().printMessage(Kind.NOTE,
-				"Generating Bson type for class '" + type + "'");
-
-		return new BsoneeGenerator(type, processingEnv).getJavaFile();
-	}
-
 	private JavaFile createBsoneeCodecClass(TypeElement type) {
 		processingEnv.getMessager().printMessage(Kind.NOTE,
 				"Generating Codec...", type);
@@ -182,6 +175,13 @@ public class BsonProcessor extends AbstractProcessor {
 				"Generating Codec Registry");
 
 		return new BsoneeCodecRegistryGenerator(generated, processingEnv).getJavaFile();
+	}
+	
+	private JavaFile createBsoneeClass() {
+		processingEnv.getMessager().printMessage(Kind.NOTE,
+				"Generating BsoneeBson");
+
+		return new BsoneeGenerator(generated, processingEnv).getJavaFile();
 	}
 
 	static String elementToString(Element element) {

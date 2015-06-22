@@ -8,8 +8,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.sleepcamel.bsoneer.Bsonee;
 
-import static com.mongodb.client.model.Filters.*;
-
 public class PeopleRegistry {
 
 	@Bsonee({Person.class})
@@ -19,7 +17,8 @@ public class PeopleRegistry {
 		
 		MongoCollection<Person> collection = BsoneeCodecRegistry.to(database.getCollection("people", Person.class));
 		try{
-			collection.insertOne(new Person("John", "Doe", new Date(), GrowthStatus.ALIVE));
+			Person oldJohnny = new Person("John", "Doe", new Date(), GrowthStatus.ALIVE);
+			collection.insertOne(oldJohnny);
 			
 			System.out.println("We have "+collection.count()+" person(s) registered");
 			collection.find().forEach(new Block<Person>() {
@@ -28,7 +27,7 @@ public class PeopleRegistry {
 				}
 			});
 			
-			collection.findOneAndReplace(and(eq("name", "John"),eq("lastName", "Doe")),new Person("Johnny", "Dead", new Date(), GrowthStatus.DEAD));
+			collection.findOneAndReplace(BsoneeBson.bson(oldJohnny),new Person("Johnny", "Dead", new Date(), GrowthStatus.DEAD));
 			
 			System.out.println("We have "+collection.count()+" person(s) registered");
 			

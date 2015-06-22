@@ -244,7 +244,7 @@ public class Util {
 		Elements utils = processingEnv.getElementUtils();
 		return getSuperType(utils.getTypeElement(Util.rawTypeToString(type, '.')), processingEnv);
 	}
-
+	
 	public static ParameterSpec bsonReaderParameter() {
 		return ParameterSpec.builder(bsonReaderTypeName(), "reader").build();
 	}
@@ -295,6 +295,10 @@ public class Util {
 
 	public static TypeName bsonCodecProviderTypeName() {
 		return ClassName.get("org.bson.codecs.configuration", "CodecProvider");
+	}
+	
+	public static TypeName bsonTypeName(){
+		return ClassName.get("org.bson.conversions","Bson");
 	}
 
 	public static AnnotationSpec suppressWarningsAnnotation() {
