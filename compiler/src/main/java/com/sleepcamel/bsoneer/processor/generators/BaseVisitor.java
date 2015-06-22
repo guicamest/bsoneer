@@ -85,7 +85,8 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
             return visitUnknown(e, boxPrimitives);
 		}
 		if (e.getModifiers().contains(Modifier.FINAL)
-				|| e.getModifiers().contains(Modifier.PRIVATE)) {
+				|| e.getModifiers().contains(Modifier.PRIVATE)
+				|| e.getModifiers().contains(Modifier.TRANSIENT)) {
 			return DEFAULT_VALUE;
 		}
 		String varName = e.getSimpleName().toString();
