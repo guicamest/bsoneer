@@ -90,13 +90,7 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 			return DEFAULT_VALUE;
 		}
 		String varName = e.getSimpleName().toString();
-		if (!visited(varName)) {
-			TypeMirror tm = e.asType();
-			if (tm.getKind().isPrimitive() && boxPrimitives) {
-				tm = typeUtils.boxedClass((PrimitiveType) tm).asType();
-			}
-			visitedVars.put(tm, new VarInfo(varName, varName, tm));
-		}
+		addVarInfo(varName, varName, e.asType(), boxPrimitives);
 		return DEFAULT_VALUE;
 	}
 
@@ -112,12 +106,16 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		String methodName = e.getSimpleName().toString();
 		String varName = methodName.substring(3);
 		varName = varName.substring(0, 1).toLowerCase() + varName.substring(1);
+		addVarInfo(varName, methodName, tm, boxPrimitives);
+        return DEFAULT_VALUE;
+    }
+	
+	private void addVarInfo(String varName, String methodName, TypeMirror tm, boolean boxPrimitives){
 		if (!visited(varName)) {
 			if (tm.getKind().isPrimitive() && boxPrimitives) {
 				tm = typeUtils.boxedClass((PrimitiveType) tm).asType();
 			}
 			visitedVars.put(tm, new VarInfo(varName, methodName, tm));
 		}
-        return DEFAULT_VALUE;
-    }
+	}
 }
