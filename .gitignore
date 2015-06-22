@@ -10,3 +10,24 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# Eclipse files
+.project
+.classpath
+.factorypath
+.settings/
+
+#Maven
+target
+#       .travis.yml
+#       CHANGELOG.md
+#       CONTRIBUTING.md
+#       README.md
+#       checkstyle.xml
+#       compiler/
+#       core/
+#       deploy_website.sh
+#       examples/
+#       pom.xml
+#       util/
+

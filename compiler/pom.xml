@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright (C) 2015 Sleepcamel
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.sleepcamel.bsoneer</groupId>
+    <artifactId>bsonner-parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>bsoneer-compiler</artifactId>
+  <name>Bsoneer Compiler</name>
+  <description>
+    Tools to generate Mongo Codecs for classes annotated with Bsoneer.
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bsoneer</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup</groupId>
+      <artifactId>javapoet</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.easytesting</groupId>
+      <artifactId>fest-assert</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bsoneer</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <classifier>tests</classifier>
+    </dependency>
+    <dependency>
+      <groupId>com.google.testing.compile</groupId>
+      <artifactId>compile-testing</artifactId>
+      <scope>test</scope>
+      <!-- 
+      <exclusions>
+		<exclusion>
+			<groupId>com.sun</groupId>
+      		<artifactId>tools</artifactId>
+		</exclusion>
+      </exclusions>
+       -->
+    </dependency>
+    <dependency>
+      <groupId>org.truth0</groupId>
+      <artifactId>truth</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+		<groupId>org.mongodb</groupId>
+		<artifactId>bson</artifactId>
+		<version>${mongo.version}</version>
+		<scope>provided</scope>
+	</dependency>
+	<dependency>
+		<groupId>org.mongodb</groupId>
+		<artifactId>mongo-java-driver</artifactId>
+		<version>${mongo.version}</version>
+		<scope>test</scope>
+	</dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-compile</id>
+            <goals><goal>compile</goal></goals>
+            <configuration>
+              <compilerArgument>-proc:none</compilerArgument>
+            </configuration>
+          </execution>
+          <execution>
+            <id>default-test-compile</id>
+            <goals><goal>testCompile</goal></goals>
+            <configuration>
+              <annotationProcessors>
+              	<annotationProcessor>com.sleepcamel.bsoneer.processor.BsonProcessor</annotationProcessor>
+              </annotationProcessors>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <excludePackageNames>com.sleepcamel.bsoneer.processor:com.sleepcamel.bsoneer.processor.*</excludePackageNames>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-invoker-plugin</artifactId>
+        <configuration>
+          <addTestClassPath>true</addTestClassPath>
+          <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+          <cloneClean>true</cloneClean>
+          <profiles>
+            <profile>!sonatype-oss-release</profile>
+          </profiles>
+          <pomIncludes>
+            <pomInclude>*/pom.xml</pomInclude>
+          </pomIncludes>
+          <localRepositoryPath>${project.build.directory}/it-repo</localRepositoryPath>
+          <filterProperties>
+            <dagger.version>${project.version}</dagger.version>
+            <dagger.groupId>${project.groupId}</dagger.groupId>
+          </filterProperties>
+          <streamLogs>true</streamLogs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>integration-test</id>
+            <goals>
+              <goal>install</goal>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+                  <!-- guava which has a consistent API and whose public types we vend in producers -->
+                  <!-- annotation processors dagger uses to be built, not to operate -->
+                  <!-- projects should depend on api projects directly -->
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
