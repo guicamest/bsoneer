@@ -1,4 +1,4 @@
-Bsoneer
+Bsoneer [![Build Status](https://travis-ci.org/guicamest/bsoneer.svg?branch=master)](https://travis-ci.org/pantsbuild/pants/branches)
 ========
 
 A fast dependency injector for Android and Java.
