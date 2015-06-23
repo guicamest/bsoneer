@@ -1,10 +1,13 @@
 package com.sleepcamel.bsoneer.processor.generators;
 
+import java.util.Collection;
+
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.type.TypeMirror;
 
 import com.sleepcamel.bsoneer.processor.util.Util;
 import com.squareup.javapoet.MethodSpec.Builder;
+import com.squareup.javapoet.TypeName;
 
 class GetterElementVisitor extends BaseVisitor {
 
@@ -26,6 +29,12 @@ class GetterElementVisitor extends BaseVisitor {
 					} else {
 						if (writeMethod != null) {
 							p.addStatement("writer.write$L(value.$L)", writeMethod, accessName);
+						} else if (isJavaCollection(key)) {
+							// IF $L is a java.util.Collection or superclass(iface) inside java.lang or an array, call
+							// protected void encode(BsonWriter writer, Collection<?> coll, EncoderContext encoderContext) {
+//							encode(BsonWriter writer, Collection<?> coll, EncoderContext encoderContext)
+							p.addStatement("encode(writer, ($T)value.$L, encoderContext)", TypeName.get(Collection.class), accessName);
+							System.out.println(key+" IS A COLLECTION!!!");
 						} else {
 							p.addStatement("Object v = value.$L", accessName);
 							p.addStatement("$T c = registry.get(v.getClass())",
@@ -48,4 +57,5 @@ class GetterElementVisitor extends BaseVisitor {
 			}
 		}
 	}
+
 }

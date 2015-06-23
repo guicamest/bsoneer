@@ -1,6 +1,10 @@
 package com.sleepcamel.bsoneer.example;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
+import org.bson.types.BasicBSONList;
 
 public class Person {
 
@@ -17,6 +21,9 @@ public class Person {
 	boolean male;
 	Short tee;
 	Integer ing;
+	List<String> ls;
+	ArrayList<String> als;
+	BasicBSONList bbl;
 
 	protected Person(){}
 	

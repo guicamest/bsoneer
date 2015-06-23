@@ -1,5 +1,6 @@
 package com.sleepcamel.bsoneer.processor.generators;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -57,6 +58,7 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 			put(BsonTimestamp.class.getCanonicalName(), "Timestamp").
 			build();
 	private Types typeUtils;
+	private Elements elementUtils;
 
 	public BaseVisitor(ProcessingEnvironment processingEnv, String execPrefix, boolean canReturnVoid, int argQty) {
 		this.execPrefix = execPrefix;
@@ -64,8 +66,9 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		this.argQty = argQty;
 		Map<BsonType, Class<?>> empty = Collections.emptyMap();
 		BsonTypeClassMap bsonTypeClassMap = new BsonTypeClassMap(empty);
-		Elements elementUtils = processingEnv.getElementUtils();
+		elementUtils = processingEnv.getElementUtils();
 		typeUtils = processingEnv.getTypeUtils();
+		
 		for (BsonType type : BsonType.values()) {
 			Class<?> class1 = bsonTypeClassMap.get(type);
 			if (class1 != null) {
@@ -117,5 +120,12 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 			}
 			visitedVars.put(tm, new VarInfo(varName, methodName, tm));
 		}
+	}
+	
+	protected boolean isJavaCollection(TypeMirror key) {
+		return elementUtils.getPackageElement("java.util")
+				.equals(elementUtils.getPackageOf(typeUtils.asElement(key))) && 
+				typeUtils.isAssignable(typeUtils.erasure(key),
+				typeUtils.erasure(elementUtils.getTypeElement(Collection.class.getCanonicalName()).asType()));
 	}
 }

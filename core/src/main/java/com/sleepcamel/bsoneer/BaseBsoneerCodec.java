@@ -18,7 +18,9 @@ package com.sleepcamel.bsoneer;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.bson.BsonReader;
@@ -27,6 +29,7 @@ import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.assertions.Assertions;
 import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodecProvider;
@@ -127,6 +130,48 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 		writer.writeStartDocument();
 		encodeVariables(writer, value, encoderContext);
 		writer.writeEndDocument();
+	}
+	
+	/**
+	 * To be used if and only if it belongs to {@link java.util} package
+	 * @param writer
+	 * @param coll
+	 * @param encoderContext
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	protected void encode(BsonWriter writer, Collection<?> coll, EncoderContext encoderContext) {
+		writer.writeStartArray();
+		Iterator<?> iterator = coll.iterator();
+		while(iterator.hasNext()){
+			Object next = iterator.next();
+			if ( next == null ){
+				writer.writeNull();
+			}else{
+				Codec codec = registry.get(next.getClass());
+				encoderContext.encodeWithChildContext(codec, writer, next);
+			}
+		}
+		writer.writeEndArray();
+	}
+	
+	/**
+	 * To be used if and only if it is an array []
+	 * @param writer
+	 * @param coll
+	 * @param encoderContext
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	protected void encode(BsonWriter writer, Object[] coll, EncoderContext encoderContext) {
+		writer.writeStartArray();
+		for (Object next : coll) {
+			if ( next == null ){
+				writer.writeNull();
+			}else{
+				Codec codec = registry.get(next.getClass());
+				encoderContext.encodeWithChildContext(codec, writer, next);
+			}
+		}
+		writer.writeEndArray();
 	}
 
     protected void encodeVariables(BsonWriter writer, T value, EncoderContext encoderContext){};
