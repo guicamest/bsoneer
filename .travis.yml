@@ -3,3 +3,19 @@ language: java
 jdk:
   - oraclejdk7
 
+install: mvn install clean --fail-never --quiet -DskipTests=true -Dinvoker.skip=true
+
+script: mvn verify
+
+after_success:
+  - .buildscript/deploy_snapshot.sh
+
+branches:
+  except:
+    - gh-pages
+
+sudo: false
+
+cache:
+  directories:
+    - $HOME/.m2
