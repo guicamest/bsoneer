@@ -1,208 +1,256 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
- Copyright (C) 2015 Sleepcamel
+<!-- Copyright (C) 2015 Sleepcamel Licensed under the Apache License, Version 
+	2.0 (the "License"); you may not use this file except in compliance with 
+	the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 
+	Unless required by applicable law or agreed to in writing, software distributed 
+	under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES 
+	OR CONDITIONS OF ANY KIND, either express or implied. See the License for 
+	the specific language governing permissions and limitations under the License. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
+	<groupId>com.sleepcamel.bsoneer</groupId>
+	<artifactId>bsonner-parent</artifactId>
+	<packaging>pom</packaging>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>Bsoneer (Parent)</name>
+	<description>Mongo 3.0 library to generate codecs for existing beans</description>
+	<url>https://github.com/guicamest/bsoneer</url>
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	<modules>
+		<module>compiler</module>
+		<module>core</module>
+		<!-- examples are handled in a default profile (see below) -->
+	</modules>
 
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>7</version>
-  </parent>
+		<!-- Compilation -->
+		<java.version>1.6</java.version>
+		<javapoet.version>1.0.0</javapoet.version>
+		<guava.version>18.0</guava.version>
+		<mongo.version>3.0.2</mongo.version>
 
-  <groupId>com.sleepcamel.bsoneer</groupId>
-  <artifactId>bsonner-parent</artifactId>
-  <packaging>pom</packaging>
-  <version>0.0.1-SNAPSHOT</version>
-  <name>Bsoneer (Parent)</name>
-  <description>Mongo 3.0 library to generate codecs for existing beans</description>
-  <url>https://github.com/guicamest/bsoneer</url>
+		<!-- Test Dependencies -->
+		<junit.version>4.10</junit.version>
+		<fest.version>1.4</fest.version>
+		<truth.version>0.13</truth.version>
+		<compile-testing.version>0.4</compile-testing.version>
+		<mockito.version>1.10.19</mockito.version>
+	</properties>
 
-  <modules>
-    <module>compiler</module>
-    <module>core</module>
-    <!-- examples are handled in a default profile (see below) -->
-  </modules>
+	<scm>
+		<url>http://github.com/guicamest/bsoneer/</url>
+		<connection>scm:git:git@github.com:guicamest/bsoneer.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/guicamest/bsoneer.git</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>http://github.com/guicamest/bsoneer/issues</url>
+	</issueManagement>
 
-    <!-- Compilation -->
-    <java.version>1.6</java.version>
-    <javax.inject.version>1</javax.inject.version>
-    <javapoet.version>1.0.0</javapoet.version>
-    <guava.version>18.0</guava.version>
-    <mongo.version>3.0.2</mongo.version>
+	<licenses>
+		<license>
+			<name>Apache 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
 
-    <!-- Test Dependencies -->
-    <junit.version>4.10</junit.version>
-    <fest.version>1.4</fest.version>
-    <truth.version>0.13</truth.version>
-    <compile-testing.version>0.4</compile-testing.version>
-    <mockito.version>1.10.19</mockito.version>
-  </properties>
+	<organization>
+		<name>Sleepcamel</name>
+	</organization>
 
-  <scm>
-    <url>http://github.com/google/dagger/</url>
-    <connection>scm:git:git@github.com:guicamest/bsoneer.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/guicamest/bsoneer.git</developerConnection>
-    <tag>HEAD</tag>
-  </scm>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.squareup</groupId>
+				<artifactId>javapoet</artifactId>
+				<version>${javapoet.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>${guava.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>${junit.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.easytesting</groupId>
+				<artifactId>fest-assert</artifactId>
+				<version>${fest.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.testing.compile</groupId>
+				<artifactId>compile-testing</artifactId>
+				<version>${compile-testing.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.truth0</groupId>
+				<artifactId>truth</artifactId>
+				<version>${truth.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>${mockito.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
-  <issueManagement>
-    <system>GitHub Issues</system>
-    <url>http://github.com/guicamest/bsoneer/issues</url>
-  </issueManagement>
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<artifactId>maven-invoker-plugin</artifactId>
+					<version>1.7</version>
+				</plugin>
+				<plugin>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.1</version>
+				</plugin>
+				<plugin>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>2.5</version>
+				</plugin>
+				<plugin>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<version>2.9.1</version>
+				</plugin>
+				<plugin>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>2.2.1</version>
+				</plugin>
+				<plugin>
+					<artifactId>maven-gpg-plugin</artifactId>
+					<version>1.5</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 
-  <licenses>
-    <license>
-      <name>Apache 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<compilerArgument>-Xlint:all</compilerArgument>
+					<showWarnings>true</showWarnings>
+					<showDeprecation>true</showDeprecation>
+				</configuration>
+			</plugin>
 
-  <organization>
-    <name>Sleepcamel</name>
-  </organization>
+			<plugin>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.3.2</version><!--$NO-MVN-MAN-VER$ -->
+				<configuration>
+					<autoVersionSubmodules>true</autoVersionSubmodules>
+				</configuration>
+			</plugin>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>com.squareup</groupId>
-        <artifactId>javapoet</artifactId>
-        <version>${javapoet.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.guava</groupId>
-        <artifactId>guava</artifactId>
-        <version>${guava.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>${junit.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.easytesting</groupId>
-        <artifactId>fest-assert</artifactId>
-        <version>${fest.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.google.testing.compile</groupId>
-        <artifactId>compile-testing</artifactId>
-        <version>${compile-testing.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.truth0</groupId>
-        <artifactId>truth</artifactId>
-        <version>${truth.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
-        <version>${mockito.version}</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<doctitle>Bsoneer ${project.version} API</doctitle>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <artifactId>maven-invoker-plugin</artifactId>
-          <version>1.7</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.1</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>2.5</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>2.7</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
+			<plugin>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>2.10</version>
+				<configuration>
+					<failsOnError>false</failsOnError>
+					<consoleOutput>false</consoleOutput>
+					<configLocation>checkstyle.xml</configLocation>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>compile</phase>
+						<goals>
+							<goal>checkstyle</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<version>1.6.3</version>
+				<extensions>true</extensions>
+				<configuration>
+					<serverId>ossrh</serverId>
+					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-          <compilerArgument>-Xlint:all</compilerArgument>
-          <showWarnings>true</showWarnings>
-          <showDeprecation>true</showDeprecation>
-        </configuration>
-      </plugin>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
 
-      <plugin>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.3.2</version><!--$NO-MVN-MAN-VER$-->
-        <configuration>
-          <autoVersionSubmodules>true</autoVersionSubmodules>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <configuration>
-          <doctitle>Bsoneer ${project.version} API</doctitle>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>2.10</version>
-        <configuration>
-          <failsOnError>false</failsOnError>
-          <consoleOutput>false</consoleOutput>
-          <configLocation>checkstyle.xml</configLocation>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-            <goals>
-              <goal>checkstyle</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
-
-  <!--
-    A profile which when switched off excludes example modules.  By default the profile
-    is on and invokes examples.  However, when processing javadocs, it is switched off
-    omitting the example code from the javadoc.
-  -->
-  <profiles>
-    <profile>
-      <id>examples</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <modules>
-        <module>core</module>
-        <module>compiler</module>
-        <module>examples</module>
-      </modules>
-    </profile>
-  </profiles>
+	<!-- A profile which when switched off excludes example modules. By default 
+		the profile is on and invokes examples. However, when processing javadocs, 
+		it is switched off omitting the example code from the javadoc. -->
+	<profiles>
+		<profile>
+			<id>examples</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+				<module>core</module>
+				<module>compiler</module>
+				<module>examples</module>
+			</modules>
+		</profile>
+	</profiles>
 </project>

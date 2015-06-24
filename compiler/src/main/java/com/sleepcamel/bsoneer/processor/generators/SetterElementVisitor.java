@@ -34,18 +34,18 @@ class SetterElementVisitor extends BaseVisitor {
 			TypeMirror key = vi.getTypeMirror();
 			String setterClassName = vi.getUpperName() + "Setter";
 			String readMethod = passThroughMappings.get(key.toString());
+			TypeSpec.Builder setterBuilder = null;
 			if (Util.isEnum(key)) {
-				setters.put(vi.getName(), setterClassName);
-
-				TypeSpec.Builder setterBuilder = createSetterClass(entityClassName, setterIface,
+				setterBuilder = createSetterClass(entityClassName, setterIface,
 						"String", vi, setterClassName, "$T.valueOf", ClassName.get(key));
-				codecBuilder.addType(setterBuilder.build());
+			} else if (isJavaCollection(key)) {
+				setterBuilder = createSetterClassForCollection(entityClassName, setterIface, vi, setterClassName, getJavaCollectionImplementationClass(key));
 			} else {
-				setters.put(vi.getName(), setterClassName);
-				TypeSpec.Builder setterBuilder = createSetterClass(entityClassName, setterIface,
+				setterBuilder = createSetterClass(entityClassName, setterIface,
 						readMethod, vi, setterClassName, null);
-				codecBuilder.addType(setterBuilder.build());
 			}
+			setters.put(vi.getName(), setterClassName);
+			codecBuilder.addType(setterBuilder.build());
 		}
 
 		Builder setupSetterBuilder = MethodSpec.methodBuilder("setupSetters").addModifiers(Modifier.PROTECTED);
@@ -85,8 +85,43 @@ class SetterElementVisitor extends BaseVisitor {
 		} else {
 			setterMethod.addStatement("instance." + accessName, readMethod);
 		}
-		setterBuilder.addMethod(setterMethod.build()).addSuperinterface(setterIface);
-		return setterBuilder;
+		return setterBuilder.addMethod(setterMethod.build()).addSuperinterface(setterIface);
+	}
+
+	private TypeSpec.Builder createSetterClassForCollection(ClassName entityClassName, TypeName setterIface, VarInfo vi,
+			String setterClassName, TypeMirror collImplClass){
+		TypeSpec.Builder setterBuilder = TypeSpec.classBuilder(setterClassName);
+		String getAccessName = vi.getMethod();
+		if ( vi.isMethod() ){
+			// TODO Support isSmth() getters
+			getAccessName = "get"+getAccessName.substring(3);
+		}
+		getAccessName += vi.isMethod() ? "()" : "";
+		
+		String setAccessName = vi.getMethod();
+		setAccessName += vi.isMethod() ? "(value)" : " = value";
+		
+		// TODO Check if collection is initialized with an implementation
+		Builder setterMethod = MethodSpec.methodBuilder("set")
+				.addParameter(ParameterSpec.builder(entityClassName, "instance").build())
+				.addParameter(Util.bsonReaderParameter())
+				.addParameter(Util.bsonDecoderContextParameter())
+				.addModifiers(Modifier.PUBLIC);
+		
+		setterMethod.addStatement("$T value = instance.$L", vi.getTypeMirror(), getAccessName);
+		
+		setterMethod.beginControlFlow("if (value == null)");
+		setterMethod.addStatement("value = new $T()", TypeName.get(collImplClass));
+		setterMethod.addStatement("instance."+setAccessName);
+		setterMethod.endControlFlow();
+		
+		setterMethod.addStatement("reader.readStartArray()");
+		
+		setterMethod.beginControlFlow("while (reader.readBsonType() != $T.END_OF_DOCUMENT)", Util.bsonTypeTypeName());
+		setterMethod.addStatement("value.add(($T)defaultReader.readValue(reader, decoderContext))", typeArg(vi.getTypeMirror()));
+		setterMethod.endControlFlow();
+		setterMethod.addStatement("reader.readEndArray()");
+		return setterBuilder.addMethod(setterMethod.build()).addSuperinterface(setterIface);		
 	}
 
 }

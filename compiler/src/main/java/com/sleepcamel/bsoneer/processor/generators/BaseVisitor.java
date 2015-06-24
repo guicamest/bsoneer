@@ -1,10 +1,24 @@
 package com.sleepcamel.bsoneer.processor.generators;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Queue;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.TransferQueue;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ElementKind;
@@ -12,6 +26,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
@@ -59,6 +74,7 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 			build();
 	private Types typeUtils;
 	private Elements elementUtils;
+	private static Map<TypeMirror, TypeElement> collectionMappings = new HashMap<TypeMirror, TypeElement>();
 
 	public BaseVisitor(ProcessingEnvironment processingEnv, String execPrefix, boolean canReturnVoid, int argQty) {
 		this.execPrefix = execPrefix;
@@ -77,6 +93,19 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 				mappings.put(typeElement.asType(), type);
 			}
 		}
+		addCollectionMapping(BlockingDeque.class, LinkedBlockingDeque.class);
+		addCollectionMapping(BlockingQueue.class, LinkedBlockingDeque.class);
+		addCollectionMapping(Deque.class, LinkedBlockingDeque.class);
+		addCollectionMapping(Queue.class, LinkedBlockingDeque.class);
+		addCollectionMapping(List.class, ArrayList.class);
+		addCollectionMapping(Set.class, LinkedHashSet.class);
+		addCollectionMapping(SortedSet.class, TreeSet.class);
+		addCollectionMapping(NavigableSet.class, TreeSet.class);
+		addCollectionMapping(TransferQueue.class, LinkedTransferQueue.class);
+	}
+	
+	private void addCollectionMapping(Class a, Class b){
+		collectionMappings.put(typeUtils.erasure(elementUtils.getTypeElement(a.getCanonicalName()).asType()), elementUtils.getTypeElement(b.getCanonicalName()));
 	}
 
 	public boolean visited(String fieldName) {
@@ -127,5 +156,24 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 				.equals(elementUtils.getPackageOf(typeUtils.asElement(key))) && 
 				typeUtils.isAssignable(typeUtils.erasure(key),
 				typeUtils.erasure(elementUtils.getTypeElement(Collection.class.getCanonicalName()).asType()));
+	}
+	
+	protected TypeMirror typeArg(TypeMirror tm){
+		return ((DeclaredType) tm).getTypeArguments().get(0);
+	}
+	
+	protected TypeMirror getJavaCollectionImplementationClass(TypeMirror typeMirror) {
+		if ( !isJavaCollection(typeMirror) ){
+			throw new RuntimeException("Type "+typeMirror+" is not a java collection");
+		}
+		DeclaredType declared = (DeclaredType) typeMirror;
+		if ( ElementKind.INTERFACE.equals(declared.asElement().getKind()) ){
+			TypeMirror dt = declared.getTypeArguments().get(0);
+			TypeElement typeElem = collectionMappings.get(typeUtils.erasure(typeMirror));
+			return typeUtils.getDeclaredType(typeElem, dt);
+		}else{
+			System.out.println("Not an interface");
+		}
+		return typeMirror;
 	}
 }

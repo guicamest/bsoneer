@@ -12,6 +12,7 @@ import com.squareup.javapoet.TypeName;
 class GetterElementVisitor extends BaseVisitor {
 
 	public GetterElementVisitor(ProcessingEnvironment processingEnv) {
+		// TODO Support isSmth() getters
 		super(processingEnv, "get", false, 0);
 	}
 
@@ -34,7 +35,6 @@ class GetterElementVisitor extends BaseVisitor {
 							// protected void encode(BsonWriter writer, Collection<?> coll, EncoderContext encoderContext) {
 //							encode(BsonWriter writer, Collection<?> coll, EncoderContext encoderContext)
 							p.addStatement("encode(writer, ($T)value.$L, encoderContext)", TypeName.get(Collection.class), accessName);
-							System.out.println(key+" IS A COLLECTION!!!");
 						} else {
 							p.addStatement("Object v = value.$L", accessName);
 							p.addStatement("$T c = registry.get(v.getClass())",

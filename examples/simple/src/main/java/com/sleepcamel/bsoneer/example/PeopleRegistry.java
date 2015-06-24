@@ -18,6 +18,8 @@ public class PeopleRegistry {
 		MongoCollection<Person> collection = BsoneeCodecRegistry.to(database.getCollection("people", Person.class));
 		try{
 			Person oldJohnny = new Person("John", "Doe", new Date(), GrowthStatus.ALIVE);
+			oldJohnny.hs.add("Some");
+			oldJohnny.hs.add("Thing");
 			collection.insertOne(oldJohnny);
 			
 			System.out.println("We have "+collection.count()+" person(s) registered");
@@ -27,7 +29,10 @@ public class PeopleRegistry {
 				}
 			});
 			
-			collection.findOneAndReplace(BsoneeBson.bson(oldJohnny),new Person("Johnny", "Dead", new Date(), GrowthStatus.DEAD));
+			Person replacement = new Person("Johnny", "Dead", new Date(), GrowthStatus.DEAD);
+			replacement.hs.add("Hey");
+			replacement.hs.add("You");
+			collection.findOneAndReplace(BsoneeBson.bson(oldJohnny),replacement);
 			
 			System.out.println("We have "+collection.count()+" person(s) registered");
 			

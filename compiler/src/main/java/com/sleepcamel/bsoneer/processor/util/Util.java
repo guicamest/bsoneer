@@ -302,6 +302,10 @@ public class Util {
 		return ClassName.get("org.bson.conversions", "Bson");
 	}
 	
+	public static TypeName bsonTypeTypeName() {
+		return ClassName.get("org.bson", "BsonType");
+	}
+	
 	public static AnnotationSpec suppressWarningsAnnotation() {
 		return suppressWarningsAnnotation(true, true);
 	}
