@@ -8,6 +8,7 @@ install: mvn install clean -DskipTests=true -Dinvoker.skip=true -Dgpg.skip=true
 script: mvn verify -Dgpg.skip=true
 
 after_success:
+  - chmod +x .buildscript/deploy_snapshot.sh
   - .buildscript/deploy_snapshot.sh
 
 branches:
