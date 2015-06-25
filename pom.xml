@@ -243,5 +243,35 @@
 				<module>examples</module>
 			</modules>
 		</profile>
+	    <profile>
+	        <id>java8</id>
+	        <activation>
+	            <jdk>1.8</jdk>								
+	        </activation>
+			<modules>
+				<module>core</module>
+				<module>compiler</module>
+				<module>examples</module>
+			</modules>
+	        <build>
+	            <plugins>
+	                <plugin>
+	                    <groupId>org.apache.maven.plugins</groupId>
+	                    <artifactId>maven-javadoc-plugin</artifactId>
+	                    <executions>
+	                        <execution>
+	                            <phase>package</phase>
+	                            <goals>
+	                                <goal>jar</goal>
+	                            </goals>
+	                            <configuration>
+	                                <additionalparam>-Xdoclint:none</additionalparam>
+	                            </configuration>
+	                        </execution>
+	                    </executions>
+	                </plugin>
+	            </plugins>
+	        </build>
+	    </profile>
 	</profiles>
 </project>
