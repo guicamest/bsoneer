@@ -1,17 +1,29 @@
 package com.sleepcamel.bsoneer.processor.generators;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import javax.lang.model.type.TypeMirror;
 
 class VarInfo {
 
-	private String name;
-	private String method;
-	private TypeMirror typeMirror;
+	final private String name;
+	final private String method;
+	final private TypeMirror typeMirror;
+	final private boolean accessViaProperty;
+	private List<String> bsonNames;
 
-	public VarInfo(String name, String methodName, TypeMirror typeMirror) {
+	public VarInfo(String name, String methodName, TypeMirror typeMirror, boolean accessViaProperty, String bsonName, String ... otherBsonNames) {
 		this.name = name;
 		this.method = methodName;
 		this.typeMirror = typeMirror;
+		this.bsonNames = new ArrayList<String>();
+		bsonNames.add(bsonName);
+		if ( otherBsonNames != null ){
+			bsonNames.addAll(Arrays.asList(otherBsonNames));
+		}
+		this.accessViaProperty = accessViaProperty;
 	}
 
 	public String getName() {
@@ -24,19 +36,24 @@ class VarInfo {
 		}
 		return name.toUpperCase();
 	}
-	public void setName(String name) {
-		this.name = name;
-	}
 	public boolean isMethod() {
-		return !method.equals(name);
+		return !accessViaProperty;
 	}
 
 	public String getMethod() {
 		return method;
 	}
 
-	public void setMethod(String method) {
-		this.method = method;
+	public TypeMirror getTypeMirror() {
+		return typeMirror;
+	}
+
+	public String getBsonName() {
+		return bsonNames.get(0);
+	}
+	
+	public List<String> getBsonNames() {
+		return bsonNames;
 	}
 
 	@Override
@@ -64,7 +81,4 @@ class VarInfo {
 		return true;
 	}
 
-	public TypeMirror getTypeMirror() {
-		return typeMirror;
-	}
 }

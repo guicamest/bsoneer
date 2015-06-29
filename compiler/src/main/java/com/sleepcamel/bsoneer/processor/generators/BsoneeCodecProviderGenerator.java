@@ -26,10 +26,10 @@ public class BsoneeCodecProviderGenerator {
 	private Set<ClassName> generated = new HashSet<ClassName>();
 	private final String basePackage;
 
-	public BsoneeCodecProviderGenerator(Set<String> generated, ProcessingEnvironment processingEnv) {
+	public BsoneeCodecProviderGenerator(Set<AnnotationInfo> generated, ProcessingEnvironment processingEnv) {
 		String basePackage = null;
-		for (String generatedClass : generated) {
-			ClassName entityClassName = ClassName.bestGuess(generatedClass);
+		for (AnnotationInfo generatedClass : generated) {
+			ClassName entityClassName = ClassName.bestGuess(generatedClass.typeAsString());
 			if (basePackage == null || basePackage.length() > entityClassName.packageName().length()) {
 				basePackage = entityClassName.packageName();
 			}

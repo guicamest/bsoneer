@@ -10,7 +10,8 @@ import com.sleepcamel.bsoneer.Bsonee;
 
 public class PeopleRegistry {
 
-	@Bsonee({Person.class})
+	//@Bsonees({@Bsonee(Person.class)})
+	@Bsonee(Person.class)
 	public static void main(String[] args) {
 		MongoClient mongoClient = new MongoClient();
 		MongoDatabase database = mongoClient.getDatabase("people-registry-example");

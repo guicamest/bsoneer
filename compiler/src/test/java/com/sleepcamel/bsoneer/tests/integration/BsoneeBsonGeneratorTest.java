@@ -29,7 +29,7 @@ import com.google.common.base.Joiner;
 import com.google.testing.compile.JavaFileObjects;
 
 @RunWith(JUnit4.class)
-final public class BsoneeGeneratorTest {
+final public class BsoneeBsonGeneratorTest {
 
 	@Test public void generationTest() {
 	    JavaFileObject sourceFile = JavaFileObjects.forSourceString("Person", Joiner.on("\n").join(

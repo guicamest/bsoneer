@@ -17,8 +17,6 @@ import java.util.TreeSet;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.LinkedTransferQueue;
-import java.util.concurrent.TransferQueue;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ElementKind;
@@ -75,11 +73,13 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 	private Types typeUtils;
 	private Elements elementUtils;
 	private static Map<TypeMirror, TypeElement> collectionMappings = new HashMap<TypeMirror, TypeElement>();
+	private AnnotationInfo ai;
 
-	public BaseVisitor(ProcessingEnvironment processingEnv, String execPrefix, boolean canReturnVoid, int argQty) {
+	public BaseVisitor(ProcessingEnvironment processingEnv, String execPrefix, boolean canReturnVoid, int argQty, AnnotationInfo ai) {
 		this.execPrefix = execPrefix;
 		this.canReturnVoid = canReturnVoid;
 		this.argQty = argQty;
+		this.ai = ai;
 		Map<BsonType, Class<?>> empty = Collections.emptyMap();
 		BsonTypeClassMap bsonTypeClassMap = new BsonTypeClassMap(empty);
 		elementUtils = processingEnv.getElementUtils();
@@ -101,11 +101,15 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		addCollectionMapping(Set.class, LinkedHashSet.class);
 		addCollectionMapping(SortedSet.class, TreeSet.class);
 		addCollectionMapping(NavigableSet.class, TreeSet.class);
-		addCollectionMapping(TransferQueue.class, LinkedTransferQueue.class);
+		addCollectionMapping("java.util.concurrent.TransferQueue", "java.util.concurrent.LinkedTransferQueue");
 	}
 	
 	private void addCollectionMapping(Class a, Class b){
-		collectionMappings.put(typeUtils.erasure(elementUtils.getTypeElement(a.getCanonicalName()).asType()), elementUtils.getTypeElement(b.getCanonicalName()));
+		addCollectionMapping(a.getCanonicalName(), b.getCanonicalName());
+	}
+	
+	private void addCollectionMapping(String aCanonicalName, String bCanonicalName){
+		collectionMappings.put(typeUtils.erasure(elementUtils.getTypeElement(aCanonicalName).asType()), elementUtils.getTypeElement(bCanonicalName));
 	}
 
 	public boolean visited(String fieldName) {
@@ -143,11 +147,22 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
     }
 	
 	private void addVarInfo(String varName, String methodName, TypeMirror tm, boolean boxPrimitives){
+		boolean accessViaProperty = varName.equals(methodName);
+		String bsonName = varName;
+		boolean customId = ai.hasCustomId() && ai.getIdProperty().equals(varName);
+		String[] otherBsonNames = null;
+		if ( customId ){
+			if ( !ai.isKeepNonIdProperty() ){
+				bsonName = "_id";
+			}else{
+				otherBsonNames = new String[]{"_id"};
+			}
+		}
 		if (!visited(varName)) {
 			if (tm.getKind().isPrimitive() && boxPrimitives) {
 				tm = typeUtils.boxedClass((PrimitiveType) tm).asType();
 			}
-			visitedVars.put(tm, new VarInfo(varName, methodName, tm));
+			visitedVars.put(tm, new VarInfo(varName, methodName, tm, accessViaProperty, bsonName, otherBsonNames));
 		}
 	}
 	

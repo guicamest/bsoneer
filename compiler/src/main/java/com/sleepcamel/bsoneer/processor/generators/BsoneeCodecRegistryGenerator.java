@@ -21,10 +21,10 @@ import com.squareup.javapoet.TypeVariableName;
 public class BsoneeCodecRegistryGenerator {
 	private final String basePackage;
 
-	public BsoneeCodecRegistryGenerator(Set<String> generated, ProcessingEnvironment processingEnv) {
+	public BsoneeCodecRegistryGenerator(Set<AnnotationInfo> generated, ProcessingEnvironment processingEnv) {
 		String basePackage = null;
-		for (String generatedClass : generated) {
-			ClassName entityClassName = ClassName.bestGuess(generatedClass);
+		for (AnnotationInfo generatedClass : generated) {
+			ClassName entityClassName = ClassName.bestGuess(generatedClass.typeAsString());
 			if (basePackage == null || basePackage.length() > entityClassName.packageName().length()) {
 				basePackage = entityClassName.packageName();
 			}

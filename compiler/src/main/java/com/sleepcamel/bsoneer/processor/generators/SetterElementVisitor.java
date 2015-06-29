@@ -22,8 +22,8 @@ import com.squareup.javapoet.TypeSpec;
 
 class SetterElementVisitor extends BaseVisitor {
 
-	public SetterElementVisitor(ProcessingEnvironment processingEnv) {
-		super(processingEnv, "set", true, 1);
+	public SetterElementVisitor(ProcessingEnvironment processingEnv, AnnotationInfo ai) {
+		super(processingEnv, "set", true, 1, ai);
 	}
 
 	public void writeBody(TypeSpec.Builder codecBuilder, ClassName entityClassName) {
@@ -31,21 +31,9 @@ class SetterElementVisitor extends BaseVisitor {
 		Map<String, String> setters = new HashMap<String, String>();
 
 		for (VarInfo vi : visitedVars.values()) {
-			TypeMirror key = vi.getTypeMirror();
 			String setterClassName = vi.getUpperName() + "Setter";
-			String readMethod = passThroughMappings.get(key.toString());
-			TypeSpec.Builder setterBuilder = null;
-			if (Util.isEnum(key)) {
-				setterBuilder = createSetterClass(entityClassName, setterIface,
-						"String", vi, setterClassName, "$T.valueOf", ClassName.get(key));
-			} else if (isJavaCollection(key)) {
-				setterBuilder = createSetterClassForCollection(entityClassName, setterIface, vi, setterClassName, getJavaCollectionImplementationClass(key));
-			} else {
-				setterBuilder = createSetterClass(entityClassName, setterIface,
-						readMethod, vi, setterClassName, null);
-			}
-			setters.put(vi.getName(), setterClassName);
-			codecBuilder.addType(setterBuilder.build());
+			setters.put(vi.getBsonName(), setterClassName);
+			codecBuilder.addType(createSetterClass(entityClassName, setterIface, setterClassName, vi).build());
 		}
 
 		Builder setupSetterBuilder = MethodSpec.methodBuilder("setupSetters").addModifiers(Modifier.PROTECTED);
@@ -55,12 +43,31 @@ class SetterElementVisitor extends BaseVisitor {
 		}
 		codecBuilder.addMethod(setupSetterBuilder.build());
 	}
-
-	private TypeSpec.Builder createSetterClass(
-			ClassName entityClassName, TypeName setterIface,
-			String readMethod, VarInfo vi,
-			String setterClassName, String wrappedCall, Object... wrappedCallArguments) {
+	
+	private TypeSpec.Builder createSetterClass(ClassName entityClassName, TypeName setterIface, String setterClassName, VarInfo vi) {
 		TypeSpec.Builder setterBuilder = TypeSpec.classBuilder(setterClassName);
+		
+		TypeMirror key = vi.getTypeMirror();
+		String readMethod = passThroughMappings.get(key.toString());
+		
+		Builder setterMethod = MethodSpec.methodBuilder("set")
+				.addParameter(ParameterSpec.builder(entityClassName, "instance").build())
+				.addParameter(Util.bsonReaderParameter())
+				.addParameter(Util.bsonDecoderContextParameter())
+				.addModifiers(Modifier.PUBLIC);
+		
+		if (Util.isEnum(key)) {
+			addSetterCode(setterMethod, "String", vi, "$T.valueOf", ClassName.get(key));
+		} else if (isJavaCollection(key)) {
+			addSetterCodeForCollection(setterMethod, vi, getJavaCollectionImplementationClass(key));
+		} else {
+			addSetterCode(setterMethod, readMethod, vi, null);
+		}
+		
+		return setterBuilder.addMethod(setterMethod.build()).addSuperinterface(setterIface);
+	}
+
+	private void addSetterCode(Builder setterMethod, String readMethod, VarInfo vi, String wrappedCall, Object... wrappedCallArguments) {
 		String accessName = vi.getMethod();
 		String readerCall = "reader.read$L()";
 		if (readMethod == null) {
@@ -75,22 +82,14 @@ class SetterElementVisitor extends BaseVisitor {
 			readerCall = wrappedCall + "(" + readerCall + ")";
 		}
 		accessName += vi.isMethod() ? "(" + readerCall + ")" : " = " + readerCall;
-		Builder setterMethod = MethodSpec.methodBuilder("set")
-				.addParameter(ParameterSpec.builder(entityClassName, "instance").build())
-				.addParameter(Util.bsonReaderParameter())
-				.addParameter(Util.bsonDecoderContextParameter())
-				.addModifiers(Modifier.PUBLIC);
 		if (wrapped && wrappedCallArguments != null && wrappedCallArguments.length != 0) {
 			setterMethod.addStatement("instance." + accessName, wrappedCallArguments[0], readMethod);
 		} else {
 			setterMethod.addStatement("instance." + accessName, readMethod);
 		}
-		return setterBuilder.addMethod(setterMethod.build()).addSuperinterface(setterIface);
 	}
 
-	private TypeSpec.Builder createSetterClassForCollection(ClassName entityClassName, TypeName setterIface, VarInfo vi,
-			String setterClassName, TypeMirror collImplClass){
-		TypeSpec.Builder setterBuilder = TypeSpec.classBuilder(setterClassName);
+	private void addSetterCodeForCollection(Builder setterMethod, VarInfo vi, TypeMirror collImplClass){
 		String getAccessName = vi.getMethod();
 		if ( vi.isMethod() ){
 			// TODO Support isSmth() getters
@@ -102,12 +101,6 @@ class SetterElementVisitor extends BaseVisitor {
 		setAccessName += vi.isMethod() ? "(value)" : " = value";
 		
 		// TODO Check if collection is initialized with an implementation
-		Builder setterMethod = MethodSpec.methodBuilder("set")
-				.addParameter(ParameterSpec.builder(entityClassName, "instance").build())
-				.addParameter(Util.bsonReaderParameter())
-				.addParameter(Util.bsonDecoderContextParameter())
-				.addModifiers(Modifier.PUBLIC);
-		
 		setterMethod.addStatement("$T value = instance.$L", vi.getTypeMirror(), getAccessName);
 		
 		setterMethod.beginControlFlow("if (value == null)");
@@ -121,7 +114,6 @@ class SetterElementVisitor extends BaseVisitor {
 		setterMethod.addStatement("value.add(($T)defaultReader.readValue(reader, decoderContext))", typeArg(vi.getTypeMirror()));
 		setterMethod.endControlFlow();
 		setterMethod.addStatement("reader.readEndArray()");
-		return setterBuilder.addMethod(setterMethod.build()).addSuperinterface(setterIface);		
 	}
 
 }

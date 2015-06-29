@@ -37,10 +37,11 @@ import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
 import com.sleepcamel.bsoneer.Bsonee;
+import com.sleepcamel.bsoneer.processor.generators.AnnotationInfo;
+import com.sleepcamel.bsoneer.processor.generators.BsoneeBsonGenerator;
 import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecGenerator;
 import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecProviderGenerator;
 import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecRegistryGenerator;
-import com.sleepcamel.bsoneer.processor.generators.BsoneeGenerator;
 import com.sleepcamel.bsoneer.processor.util.Util;
 import com.squareup.javapoet.JavaFile;
 
@@ -57,7 +58,7 @@ public class BsonProcessor extends AbstractProcessor {
 		}
 	};
 
-	private Set<String> generated = new LinkedHashSet<String>();
+	private Set<AnnotationInfo> generated = new LinkedHashSet<AnnotationInfo>();
 
 	@Override
 	public SourceVersion getSupportedSourceVersion() {
@@ -67,10 +68,10 @@ public class BsonProcessor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations,
 			RoundEnvironment roundEnv) {
-		for (String c : findBsoneedClassNames(roundEnv)) {
-			TypeElement type = processingEnv.getElementUtils().getTypeElement(c);
+		for (AnnotationInfo c : findBsoneedClassNames(roundEnv)) {
+			TypeElement type = processingEnv.getElementUtils().getTypeElement(c.typeAsString());
 			try {
-				createBsoneeCodecClass(type).writeTo(processingEnv.getFiler());
+				createBsoneeCodecClass(type, c).writeTo(processingEnv.getFiler());
 				generated.add(c);
 			} catch (IOException e) {
 				error("Code gen failed: " + e, type);
@@ -88,12 +89,48 @@ public class BsonProcessor extends AbstractProcessor {
 		return !generated.isEmpty();
 	}
 
-	private Set<String> findBsoneedClassNames(RoundEnvironment env) {
-		Set<String> toGenerate = new LinkedHashSet<String>();
+	private Set<AnnotationInfo> findBsoneedClassNames(RoundEnvironment env) {
+		Set<AnnotationInfo> toGenerate = new LinkedHashSet<AnnotationInfo>();
 		for (Element element : env.getElementsAnnotatedWith(Bsonee.class)) {
 			Map<String, Object> annotation = Util.getAnnotation(Bsonee.class,
 					element);
-			Object[] values = (Object[]) annotation.get("value");
+			
+			Object object = annotation.get("value");
+			TypeMirror tm = null;
+			if (object instanceof Class) {
+				if (!element.getKind().equals(ElementKind.CLASS)) {
+					String clazzName = Util.rawTypeToString(element.asType(), '.');
+					error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
+							+ IT_IS_NOT_A_CLASS, element);
+				} else {
+					tm = element.asType();
+				}
+			} else if (object instanceof TypeMirror) {
+				tm = (TypeMirror) object;
+			}
+			if (tm != null) {
+				String clazzName = Util.rawTypeToString(tm, '.');
+				if (!addTypeAndSuperTypes(toGenerate, new AnnotationInfo(tm, (String)annotation.get("id"), (Boolean)annotation.get("keepIdProperty")))) {
+					error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
+							+ NO_DEFAULT_CONSTRUCTOR, element);
+					continue;
+				}
+			}
+		}
+		for (AnnotationInfo c : toGenerate) {
+			if (generated.contains(c)) {
+				processingEnv.getMessager().printMessage(Kind.NOTE,
+					"Already generated Bson type for class '" + c
+					+ "', skipping...");
+			} else {
+				toGenerate.add(c);
+			}
+		}
+		return toGenerate;
+	}
+	
+	/*
+	 * Object[] values = (Object[]) annotation.get("value");
 			if (values.length != 0) {
 				for (Object o : values) {
 					TypeMirror tm = (TypeMirror) o;
@@ -123,20 +160,9 @@ public class BsonProcessor extends AbstractProcessor {
 					continue;
 				}
 			}
-		}
-		for (String c : toGenerate) {
-			if (generated.contains(c)) {
-				processingEnv.getMessager().printMessage(Kind.NOTE,
-					"Already generated Bson type for class '" + c
-					+ "', skipping...");
-			} else {
-				toGenerate.add(c);
-			}
-		}
-		return toGenerate;
-	}
+	 */
 
-	private boolean addTypeAndSuperTypes(Set<String> toGenerate, TypeMirror tm) {
+	private boolean addTypeAndSuperTypes(Set<AnnotationInfo> toGenerate, AnnotationInfo annotationInfo) {
 //		ClassName superType = Util.getSuperType(tm, processingEnv);
 //		if (superType != null) {
 //			Elements elementUtils = processingEnv.getElementUtils();
@@ -144,23 +170,23 @@ public class BsonProcessor extends AbstractProcessor {
 //					.getTypeElement(superType.toString());
 //			hasDefaultConstructor &= addTypeAndSuperTypes(toGenerate, typeElement.asType());
 //		}
-		TypeElement typeElement = processingEnv.getElementUtils().getTypeElement(tm.toString());
+		TypeElement typeElement = processingEnv.getElementUtils().getTypeElement(annotationInfo.getType().toString());
 		List<ExecutableElement> constructorsIn = ElementFilter.constructorsIn(typeElement.getEnclosedElements());
 		boolean hasDefaultConstructor = constructorsIn.isEmpty();
 		for (ExecutableElement constructor : constructorsIn) {
 			hasDefaultConstructor |= (noArgsConstructorVisitor.visit(constructor));
 		}
 		if (hasDefaultConstructor) {
-			toGenerate.add(Util.rawTypeToString(tm, '.'));
+			toGenerate.add(annotationInfo);
 		}
 		return hasDefaultConstructor;
 	}
 
-	private JavaFile createBsoneeCodecClass(TypeElement type) {
+	private JavaFile createBsoneeCodecClass(TypeElement type, AnnotationInfo ai) {
 		processingEnv.getMessager().printMessage(Kind.NOTE,
 				"Generating Codec...", type);
 
-		return new BsoneeCodecGenerator(type, processingEnv).getJavaFile();
+		return new BsoneeCodecGenerator(type, ai, processingEnv).getJavaFile();
 	}
 
 	private JavaFile createBsoneeCodecProviderClass() {
@@ -181,7 +207,7 @@ public class BsonProcessor extends AbstractProcessor {
 		processingEnv.getMessager().printMessage(Kind.NOTE,
 				"Generating BsoneeBson");
 
-		return new BsoneeGenerator(generated, processingEnv).getJavaFile();
+		return new BsoneeBsonGenerator(generated, processingEnv).getJavaFile();
 	}
 
 	static String elementToString(Element element) {

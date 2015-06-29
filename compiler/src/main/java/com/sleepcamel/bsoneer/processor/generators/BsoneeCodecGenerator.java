@@ -28,10 +28,12 @@ public class BsoneeCodecGenerator {
 
 	private TypeElement type;
 	private ProcessingEnvironment processingEnv;
+	private AnnotationInfo ai;
 	private ClassName superType;
 
-	public BsoneeCodecGenerator(TypeElement type, ProcessingEnvironment processingEnv) {
+	public BsoneeCodecGenerator(TypeElement type, AnnotationInfo ai, ProcessingEnvironment processingEnv) {
 		this.type = type;
+		this.ai = ai;
 		this.superType = Util.getSuperType(type, processingEnv);
 		this.processingEnv = processingEnv;
 	}
@@ -68,6 +70,7 @@ public class BsoneeCodecGenerator {
 	}
 
 	private void addBaseConstructor(com.squareup.javapoet.TypeSpec.Builder codecBuilder, ClassName entityClassName) {
+//		public BaseBsoneerCodec()
 		codecBuilder.addMethod(MethodSpec.constructorBuilder()
 				.addModifiers(Modifier.PUBLIC)
 				.addStatement("super()")
@@ -102,7 +105,7 @@ public class BsoneeCodecGenerator {
 				.addParameter(Util.bsonEncoderContextParameter())
 				.addJavadoc("{@inhericDoc}\n");
 
-		GetterElementVisitor getterVisitor = new GetterElementVisitor(processingEnv);
+		GetterElementVisitor getterVisitor = new GetterElementVisitor(processingEnv, ai);
 
 		for (Element ee : getFields(type)) {
 			ee.accept(getterVisitor, false);
@@ -125,7 +128,7 @@ public class BsoneeCodecGenerator {
 				.returns(entityClassName)
 				.build());
 
-		SetterElementVisitor setterVisitor = new SetterElementVisitor(processingEnv);
+		SetterElementVisitor setterVisitor = new SetterElementVisitor(processingEnv, ai);
 
 		for (Element ee : getFields(type)) {
 			ee.accept(setterVisitor, true);
