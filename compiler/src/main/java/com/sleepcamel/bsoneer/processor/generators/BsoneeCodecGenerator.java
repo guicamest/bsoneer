@@ -10,8 +10,12 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Types;
+import javax.tools.Diagnostic;
 
+import com.sleepcamel.bsoneer.processor.BsonProcessor;
 import com.sleepcamel.bsoneer.processor.GeneratedClasses;
 import com.sleepcamel.bsoneer.processor.util.ProcessorJavadocs;
 import com.sleepcamel.bsoneer.processor.util.Util;
@@ -30,12 +34,15 @@ public class BsoneeCodecGenerator {
 	private ProcessingEnvironment processingEnv;
 	private AnnotationInfo ai;
 	private ClassName superType;
+	private TypeElement bsoneerIdGenerator;
 
 	public BsoneeCodecGenerator(TypeElement type, AnnotationInfo ai, ProcessingEnvironment processingEnv) {
 		this.type = type;
 		this.ai = ai;
 		this.superType = Util.getSuperType(type, processingEnv);
 		this.processingEnv = processingEnv;
+		bsoneerIdGenerator = processingEnv.getElementUtils()
+				.getTypeElement("com.sleepcamel.bsoneer.IdGenerator");
 	}
 
 	public JavaFile getJavaFile() {
@@ -57,7 +64,6 @@ public class BsoneeCodecGenerator {
 //		org.bson.BsonBinarySubType
 //		org.bson.BsonType
 
-		addBaseConstructor(codecBuilder, entityClassName);
 		addRegConstructor(codecBuilder, entityClassName);
 		addEncoderClassMethod(codecBuilder, entityClassName);
 		addEncodeMethod(codecBuilder, entityClassName);
@@ -69,19 +75,12 @@ public class BsoneeCodecGenerator {
 				.build();
 	}
 
-	private void addBaseConstructor(com.squareup.javapoet.TypeSpec.Builder codecBuilder, ClassName entityClassName) {
-//		public BaseBsoneerCodec()
-		codecBuilder.addMethod(MethodSpec.constructorBuilder()
-				.addModifiers(Modifier.PUBLIC)
-				.addStatement("super()")
-				.build());
-	}
-
 	private void addRegConstructor(com.squareup.javapoet.TypeSpec.Builder codecBuilder, ClassName entityClassName) {
-//		public BaseBsoneerCodec(final CodecRegistry registry) {
+//		public BaseBsoneerCodec(final CodecRegistry registry, final IdGenerator generator) {
 		codecBuilder.addMethod(MethodSpec.constructorBuilder()
 				.addParameter(Util.bsonRegistryParameter())
-				.addModifiers(Modifier.PUBLIC).addStatement("super(registry)")
+				.addModifiers(Modifier.PUBLIC)
+				.addStatement("super(registry, new $T())", ClassName.get(ai.getIdGeneratorType()))
 				.build());
 	}
 
@@ -114,6 +113,22 @@ public class BsoneeCodecGenerator {
 		for (Element ee : getMethods(type)) {
 			ee.accept(getterVisitor, false);
 		}
+		if ( getterVisitor.customIdNotFound() ){
+			error(BsonProcessor.ID_PROPERTY_NOT_FOUND, type);
+		}
+		if ( !ai.hasCustomId() ){
+			methodSpec.addStatement("writer.writeName(\"_id\")");
+			if (customGeneratorIsBsonned()) {
+				methodSpec.addStatement("Object vid = (($T)idGenerator).generate(value)",
+						ClassName.get(bsoneerIdGenerator));
+			} else {
+				methodSpec.addStatement("Object vid = idGenerator.generate()");
+			}
+			methodSpec.addStatement("$T cid = registry.get(vid.getClass())",
+					Util.bsonCodecTypeName());
+			methodSpec.addStatement("encoderContext.encodeWithChildContext(cid, writer, vid)");
+		}
+		
 		getterVisitor.writeBody(methodSpec);
 		methodSpec.addStatement("super.encodeVariables(writer,value,encoderContext)");
 
@@ -137,7 +152,20 @@ public class BsoneeCodecGenerator {
 		for (Element ee : getMethods(type)) {
 			ee.accept(setterVisitor, true);
 		}
+		if ( setterVisitor.customIdNotFound() ){
+			error(BsonProcessor.ID_PROPERTY_NOT_FOUND, type);
+		}
 		setterVisitor.writeBody(codecBuilder, entityClassName);
+	}
+	
+	private boolean customGeneratorIsBsonned() {
+		if ( !ai.hasCustomGenerator() ){
+			return false;
+		}
+		TypeMirror idGeneratorType = ai.getIdGeneratorType();
+		Types typeUtils = processingEnv.getTypeUtils();
+		return typeUtils.isAssignable(typeUtils.erasure(idGeneratorType),
+				typeUtils.erasure(bsoneerIdGenerator.asType()));
 	}
 
 	private List<VariableElement> getFields(TypeElement type) {
@@ -158,5 +186,10 @@ public class BsoneeCodecGenerator {
 			methodsIn.addAll(getMethods(superClassType));
 		}
 		return methodsIn;
+	}
+	
+	private void error(String msg, Element element) {
+		processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, msg,
+				element);
 	}
 }

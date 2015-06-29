@@ -1,8 +1,8 @@
 package com.sleepcamel.bsoneer.example;
 
-import java.util.List;
+import com.sleepcamel.bsoneer.Bsonee;
 
-
+@Bsonee
 public class Dog<Q,U> {
 
 	Q q;

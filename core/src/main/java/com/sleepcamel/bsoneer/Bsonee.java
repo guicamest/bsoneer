@@ -19,9 +19,12 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
+import org.bson.codecs.IdGenerator;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+
+import org.bson.codecs.ObjectIdGenerator;
 
 /**
  * Marks class or given classes to generate a specific {@link org.bson.codecs.CollectibleCodec}
@@ -47,4 +50,6 @@ public @interface Bsonee {
 	 * @return Whether the field used as id should be kept when serializing or not
 	 */
 	boolean keepIdProperty() default false;
+	
+	Class<? extends IdGenerator> idGenerator() default ObjectIdGenerator.class;
 }

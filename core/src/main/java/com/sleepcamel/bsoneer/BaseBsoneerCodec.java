@@ -15,9 +15,6 @@
  */
 package com.sleepcamel.bsoneer;
 
-import static java.util.Arrays.asList;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,16 +25,14 @@ import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.assertions.Assertions;
-import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
-import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.IdGenerator;
-import org.bson.codecs.ObjectIdGenerator;
-import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Base {@link org.bson.codecs.CollectibleCodec} for bsonee generated codecs
@@ -46,11 +41,9 @@ import org.bson.codecs.configuration.CodecRegistry;
  */
 public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 
-	private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(),
-			new BsonValueCodecProvider(),
-			new DocumentCodecProvider()));
-
-	private static final String ID_FIELD_NAME = null;
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+	
+	private static final String ID_FIELD_NAME = "_id";
 
 	protected final CodecRegistry registry;
 	protected final IdGenerator idGenerator;
@@ -60,21 +53,15 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 	protected DefaultReader defaultReader;
 
 	/**
-	 * Construct a new instance with a default {@link org.bson.codecs.configuration.CodecRegistry}
-	 */
-	public BaseBsoneerCodec() {
-		this(DEFAULT_REGISTRY);
-	}
-
-	/**
 	 * Construct a new instance with the given registry
 	 *
 	 * @param registry {@link org.bson.codecs.configuration.CodecRegistry} to be used
+	 * @param idGenerator {@link org.bson.codecs.IdGenerator} to be used
 	 */
-	public BaseBsoneerCodec(final CodecRegistry registry) {
+	public BaseBsoneerCodec(final CodecRegistry registry, final IdGenerator generator) {
 		this.registry = Assertions.notNull("registry", registry);
 		this.idGenerator = Assertions.notNull("idGenerator",
-				new ObjectIdGenerator());
+				generator);
 		defaultReader = DefaultReader.get(registry);
 		setupSetters();
 	}
@@ -83,19 +70,18 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 	}
 
 	@Override
-	public boolean documentHasId(final T document) {
-		return true;
-		// return document.containsKey(ID_FIELD_NAME);
+	public boolean documentHasId(final T entity) {
+		return false;
 	}
 
     @Override
-    public BsonValue getDocumentId(final T document) {
-        if (!documentHasId(document)) {
+    public BsonValue getDocumentId(final T entity) {
+        if (!documentHasId(entity)) {
             throw new IllegalStateException("The document does not contain an _id");
         }
         return null;
 
-//        Object id = document.get(ID_FIELD_NAME);
+//        Object id = nulldocument.get(ID_FIELD_NAME);
 //        if (id instanceof BsonValue) {
 //            return (BsonValue) id;
 //        }
@@ -110,17 +96,16 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
     }
 
     @Override
-    public T generateIdIfAbsentFromDocument(final T document) {
-        if (!documentHasId(document)) {
+    public T generateIdIfAbsentFromDocument(final T entity) {
+    	// Nothing to set here...
+//        if (!documentHasId(entity)) {
 //            document.put(ID_FIELD_NAME, idGenerator.generate());
-        }
-        return document;
+//        }
+        return entity;
     }
 
-	private boolean skipField(final EncoderContext encoderContext,
-			final String key) {
-		return encoderContext.isEncodingCollectibleDocument()
-				&& key.equals(ID_FIELD_NAME);
+	protected boolean skipField(final EncoderContext encoderContext, final String var) {
+		return encoderContext.isEncodingCollectibleDocument() && var.equals(ID_FIELD_NAME);
 	}
 
     /**
@@ -194,8 +179,7 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 			if (bsoneeBaseSetter != null) {
 				bsoneeBaseSetter.set(instance, reader, decoderContext);
 			} else {
-				// TODO Change for logger
-				System.out.println("No setter for " + fieldName);
+				logger.info("No setter for " + fieldName);
 				if (bsonType == BsonType.OBJECT_ID) {
 					reader.readObjectId();
 				}

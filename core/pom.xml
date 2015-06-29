@@ -28,6 +28,7 @@
 
   <properties>
     <java.version>1.6</java.version>
+    <org.slf4j.slf4j-api.version>1.7.7</org.slf4j.slf4j-api.version>
   </properties>
 
   <dependencies>
@@ -46,6 +47,11 @@
 		<artifactId>bson</artifactId>
 		<version>${mongo.version}</version>
 		<scope>provided</scope>
+	</dependency>
+	<dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-api</artifactId>
+		<version>${org.slf4j.slf4j-api.version}</version>
 	</dependency>
   </dependencies>
 

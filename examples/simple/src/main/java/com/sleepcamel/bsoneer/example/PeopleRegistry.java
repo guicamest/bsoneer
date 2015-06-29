@@ -11,7 +11,7 @@ import com.sleepcamel.bsoneer.Bsonee;
 public class PeopleRegistry {
 
 	//@Bsonees({@Bsonee(Person.class)})
-	@Bsonee(Person.class)
+	@Bsonee(value=Person.class, id="name")
 	public static void main(String[] args) {
 		MongoClient mongoClient = new MongoClient();
 		MongoDatabase database = mongoClient.getDatabase("people-registry-example");
@@ -30,7 +30,7 @@ public class PeopleRegistry {
 				}
 			});
 			
-			Person replacement = new Person("Johnny", "Dead", new Date(), GrowthStatus.DEAD);
+			Person replacement = new Person("John", "Dead", new Date(), GrowthStatus.DEAD);
 			replacement.hs.add("Hey");
 			replacement.hs.add("You");
 			collection.findOneAndReplace(BsoneeBson.bson(oldJohnny),replacement);

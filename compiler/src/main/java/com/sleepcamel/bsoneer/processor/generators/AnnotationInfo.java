@@ -10,9 +10,13 @@ public class AnnotationInfo {
 	private TypeMirror tm;
 	private String idProperty;
 	private boolean keepNonIdProperty;
+	private TypeMirror idGeneratorType;
+	private boolean customGenerator;
 
-	public AnnotationInfo(TypeMirror tm, String idProperty, boolean keepNonIdProperty) {
+	public AnnotationInfo(TypeMirror tm, String idProperty, boolean keepNonIdProperty, TypeMirror idGeneratorType, boolean customGenerator) {
 		this.tm = tm;
+		this.idGeneratorType = idGeneratorType;
+		this.customGenerator = customGenerator;
 		this.idProperty = Strings.nullToEmpty(idProperty).trim();
 		this.keepNonIdProperty = keepNonIdProperty;
 	}
@@ -21,12 +25,20 @@ public class AnnotationInfo {
 		return !idProperty.isEmpty();
 	}
 	
+	public boolean hasCustomGenerator() {
+		return customGenerator;
+	}
+	
 	public String getIdProperty() {
 		return idProperty;
 	}
 	
 	public boolean isKeepNonIdProperty() {
 		return keepNonIdProperty;
+	}
+	
+	public TypeMirror getIdGeneratorType() {
+		return idGeneratorType;
 	}
 
 	public TypeMirror getType() {

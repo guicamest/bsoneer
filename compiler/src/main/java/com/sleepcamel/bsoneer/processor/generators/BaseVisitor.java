@@ -74,6 +74,7 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 	private Elements elementUtils;
 	private static Map<TypeMirror, TypeElement> collectionMappings = new HashMap<TypeMirror, TypeElement>();
 	private AnnotationInfo ai;
+	private boolean foundCustomId = false;
 
 	public BaseVisitor(ProcessingEnvironment processingEnv, String execPrefix, boolean canReturnVoid, int argQty, AnnotationInfo ai) {
 		this.execPrefix = execPrefix;
@@ -104,7 +105,7 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		addCollectionMapping("java.util.concurrent.TransferQueue", "java.util.concurrent.LinkedTransferQueue");
 	}
 	
-	private void addCollectionMapping(Class a, Class b){
+	private void addCollectionMapping(Class<?> a, Class<?> b){
 		addCollectionMapping(a.getCanonicalName(), b.getCanonicalName());
 	}
 	
@@ -146,12 +147,17 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
         return DEFAULT_VALUE;
     }
 	
+	public boolean customIdNotFound(){
+		return ai.hasCustomId() && !foundCustomId;
+	}
+	
 	private void addVarInfo(String varName, String methodName, TypeMirror tm, boolean boxPrimitives){
 		boolean accessViaProperty = varName.equals(methodName);
 		String bsonName = varName;
 		boolean customId = ai.hasCustomId() && ai.getIdProperty().equals(varName);
 		String[] otherBsonNames = null;
 		if ( customId ){
+			foundCustomId  = true;
 			if ( !ai.isKeepNonIdProperty() ){
 				bsonName = "_id";
 			}else{
@@ -186,8 +192,6 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 			TypeMirror dt = declared.getTypeArguments().get(0);
 			TypeElement typeElem = collectionMappings.get(typeUtils.erasure(typeMirror));
 			return typeUtils.getDeclaredType(typeElem, dt);
-		}else{
-			System.out.println("Not an interface");
 		}
 		return typeMirror;
 	}
