@@ -52,6 +52,7 @@ public class BsonProcessor extends AbstractProcessor {
 	public static final String NO_DEFAULT_CONSTRUCTOR = "Class does not have a default constructor or it is private";
 	public static final String CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME = "Cannot use idProperty and idGenerator at the same time";
 	public static final String ID_PROPERTY_NOT_FOUND = "IdProperty not found";
+	public static final String ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR = "IdGenerator must have a default public constructor";
 
 	SimpleElementVisitor6<Boolean, Void> noArgsConstructorVisitor = new SimpleElementVisitor6<Boolean, Void>() {
 		public Boolean visitExecutable(ExecutableElement t, Void p) {
@@ -117,9 +118,15 @@ public class BsonProcessor extends AbstractProcessor {
 					// Default id generator
 					idGeneratorType = processingEnv.getElementUtils().getTypeElement(((Class<?>) idGenerator).getCanonicalName()).asType();
 				} else if (idGenerator instanceof TypeMirror){
-					customGenerator = true;
 					// Custom id generator
+					customGenerator = true;
 					idGeneratorType = (TypeMirror) idGenerator;
+					if ( ! Util.hasDefaultConstructor(idGeneratorType) ){
+						String clazzName = Util.rawTypeToString(tm, '.');
+						error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
+								+ ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR, element);
+						continue;
+					}
 				} else {
 					error("[Bsonee Internal Error] Unknown class for idGenerator: "+idGenerator.getClass(), element);
 					continue;

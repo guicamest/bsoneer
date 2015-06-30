@@ -35,8 +35,10 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleAnnotationValueVisitor6;
+import javax.lang.model.util.SimpleElementVisitor6;
 
 import com.google.common.base.Joiner;
 import com.squareup.javapoet.AnnotationSpec;
@@ -321,6 +323,27 @@ public class Util {
 		return AnnotationSpec.builder(SuppressWarnings.class)
 			.addMember("value", "{" + Joiner.on(", ").join(vals) + "}")
 			.build();
+	}
+
+	public static boolean hasDefaultConstructor(TypeMirror idGeneratorType) {
+		if( idGeneratorType.getKind() != TypeKind.DECLARED ){
+			return false;
+		}
+		
+		DeclaredType dt = (DeclaredType) idGeneratorType;
+		Element asElement = dt.asElement();
+		
+		List<ExecutableElement> constructorsIn = ElementFilter.constructorsIn(asElement.getEnclosedElements());
+		boolean hasDefaultConstructor = constructorsIn.isEmpty();
+		SimpleElementVisitor6<Boolean, Void> noArgsConstructorVisitor = new SimpleElementVisitor6<Boolean, Void>() {
+			public Boolean visitExecutable(ExecutableElement t, Void p) {
+				return t.getParameters().isEmpty() && t.getModifiers().contains(Modifier.PUBLIC);
+			}
+		};
+		for (ExecutableElement constructor : constructorsIn) {
+			hasDefaultConstructor |= (noArgsConstructorVisitor.visit(constructor));
+		}
+		return hasDefaultConstructor;
 	}
 
 }

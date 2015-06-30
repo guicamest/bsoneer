@@ -117,7 +117,7 @@ final public class BsonGeneratorTest {
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
 						"import org.bson.codecs.IdGenerator;",
 						"class CustomIdGenerator implements IdGenerator {",
-						"  protected CustomIdGenerator(){}",
+						"  public CustomIdGenerator(){}",
 						"public Object generate(){return null;}",
 						"}"));
 		
@@ -131,15 +131,14 @@ final public class BsonGeneratorTest {
 				.withErrorContaining(BsonProcessor.CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME);
 	}
 	
-	/*
-	 * TODO Validate id generator has default constructor
 	@Test
-	public void cannotUseIdPropertyWithIdGenerator_fail() {
+	public void cannotUseIdGeneratorWithoutPublicDefaultConstructor_fail() {
 		JavaFileObject idGeneratorFile = JavaFileObjects.forSourceString(
 				"CustomIdGenerator",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
 						"import org.bson.codecs.IdGenerator;",
 						"class CustomIdGenerator implements IdGenerator {",
+						"  public CustomIdGenerator(String a){}",
 						"  protected CustomIdGenerator(){}",
 						"public Object generate(){return null;}",
 						"}"));
@@ -147,13 +146,12 @@ final public class BsonGeneratorTest {
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee(id=\"a\", idGenerator=CustomIdGenerator.class)", "class Person {", "  protected Person(){}",
+						"@Bsonee(idGenerator=CustomIdGenerator.class)", "class Person {", "  protected Person(){}",
 						"  int a;", "}"));
 		ASSERT.about(javaSources()).that(Arrays.asList(idGeneratorFile, sourceFile))
 				.processedWith(bsoneerProcessors()).failsToCompile()
-				.withErrorContaining(BsonProcessor.CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME);
+				.withErrorContaining(BsonProcessor.ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR);
 	}
-	*/
 	
 	@Test
 	public void idPropertyNotFound_fail() {
