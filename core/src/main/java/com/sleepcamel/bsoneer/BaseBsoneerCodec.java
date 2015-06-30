@@ -43,8 +43,6 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	
-	private static final String ID_FIELD_NAME = "_id";
-
 	protected final CodecRegistry registry;
 	protected final IdGenerator idGenerator;
 
@@ -71,42 +69,21 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 
 	@Override
 	public boolean documentHasId(final T entity) {
-		return false;
+		// Not called by codec api... WTF?
+		return true;
 	}
 
     @Override
     public BsonValue getDocumentId(final T entity) {
-        if (!documentHasId(entity)) {
-            throw new IllegalStateException("The document does not contain an _id");
-        }
+		// Not called by codec api... WTF?
         return null;
-
-//        Object id = nulldocument.get(ID_FIELD_NAME);
-//        if (id instanceof BsonValue) {
-//            return (BsonValue) id;
-//        }
-//
-//        BsonDocument idHoldingDocument = new BsonDocument();
-//        BsonWriter writer = new BsonDocumentWriter(idHoldingDocument);
-//        writer.writeStartDocument();
-//        writer.writeName(ID_FIELD_NAME);
-//        writeValue(writer, EncoderContext.builder().build(), id);
-//        writer.writeEndDocument();
-//        return idHoldingDocument.get(ID_FIELD_NAME);
     }
 
     @Override
     public T generateIdIfAbsentFromDocument(final T entity) {
     	// Nothing to set here...
-//        if (!documentHasId(entity)) {
-//            document.put(ID_FIELD_NAME, idGenerator.generate());
-//        }
         return entity;
     }
-
-	protected boolean skipField(final EncoderContext encoderContext, final String var) {
-		return encoderContext.isEncodingCollectibleDocument() && var.equals(ID_FIELD_NAME);
-	}
 
     /**
 	 * {@inhericDoc}
@@ -179,9 +156,11 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 			if (bsoneeBaseSetter != null) {
 				bsoneeBaseSetter.set(instance, reader, decoderContext);
 			} else {
-				logger.info("No setter for " + fieldName);
+				logger.warn("No setter for " + fieldName);
 				if (bsonType == BsonType.OBJECT_ID) {
 					reader.readObjectId();
+				} else {
+					logger.error("No setter for " + fieldName+ " and cannot handle bsonType "+bsonType);
 				}
 			}
 		}

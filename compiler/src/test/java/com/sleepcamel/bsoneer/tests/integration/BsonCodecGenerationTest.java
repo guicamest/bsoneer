@@ -26,7 +26,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.google.common.base.Joiner;
-import com.google.testing.compile.CompileTester.SuccessfulCompilationClause;
 import com.google.testing.compile.JavaFileObjects;
 
 @RunWith(JUnit4.class)
@@ -78,10 +77,12 @@ public final class BsonCodecGenerationTest {
 										"	@Override",
 										"	@SuppressWarnings({\"unchecked\", \"rawtypes\"})",
 										"	protected void encodeVariables(BsonWriter writer, Person value, EncoderContext encoderContext) {",
-										"		writer.writeName(\"_id\");",
-										"		Object vid = idGenerator.generate();",
-										"		Codec cid = registry.get(vid.getClass());",
-										"		encoderContext.encodeWithChildContext(cid, writer, vid);",
+										"		if (encoderContext.isEncodingCollectibleDocument()) {",
+										"			writer.writeName(\"_id\");",
+										"			Object vid = idGenerator.generate();",
+										"			Codec cid = registry.get(vid.getClass());",
+										"			encoderContext.encodeWithChildContext(cid, writer, vid);",
+										"		}",
 										"		writer.writeInt32(\"a\", value.a);",
 										"		super.encodeVariables(writer,value,encoderContext);",
 										"	}",
@@ -318,11 +319,12 @@ public final class BsonCodecGenerationTest {
 										"	@Override",
 										"	@SuppressWarnings({\"unchecked\", \"rawtypes\"})",
 										"	protected void encodeVariables(BsonWriter writer, Person value, EncoderContext encoderContext) {",
-										
-										"		writer.writeName(\"_id\");",
-										"		Object vid = idGenerator.generate();",
-										"		Codec cid = registry.get(vid.getClass());",
-										"		encoderContext.encodeWithChildContext(cid, writer, vid);",
+										"		if (encoderContext.isEncodingCollectibleDocument()) {",
+										"			writer.writeName(\"_id\");",
+										"			Object vid = idGenerator.generate();",
+										"			Codec cid = registry.get(vid.getClass());",
+										"			encoderContext.encodeWithChildContext(cid, writer, vid);",
+										"		}",
 										"		super.encodeVariables(writer,value,encoderContext);",
 										"	}", "", "	@Override",
 										"	protected Person instantiate() {",

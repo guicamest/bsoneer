@@ -117,6 +117,7 @@ public class BsoneeCodecGenerator {
 			error(BsonProcessor.ID_PROPERTY_NOT_FOUND, type);
 		}
 		if ( !ai.hasCustomId() ){
+			methodSpec.beginControlFlow("if (encoderContext.isEncodingCollectibleDocument())");
 			methodSpec.addStatement("writer.writeName(\"_id\")");
 			if (customGeneratorIsBsonned()) {
 				methodSpec.addStatement("Object vid = (($T)idGenerator).generate(value)",
@@ -127,6 +128,7 @@ public class BsoneeCodecGenerator {
 			methodSpec.addStatement("$T cid = registry.get(vid.getClass())",
 					Util.bsonCodecTypeName());
 			methodSpec.addStatement("encoderContext.encodeWithChildContext(cid, writer, vid)");
+			methodSpec.endControlFlow();
 		}
 		
 		getterVisitor.writeBody(methodSpec);
