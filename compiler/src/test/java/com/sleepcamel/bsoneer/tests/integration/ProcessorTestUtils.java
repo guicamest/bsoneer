@@ -15,10 +15,15 @@
  */
 package com.sleepcamel.bsoneer.tests.integration;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 
 import javax.annotation.processing.Processor;
+import javax.tools.JavaFileObject;
 
+import com.google.testing.compile.JavaFileObjects;
 import com.sleepcamel.bsoneer.processor.BsonProcessor;
 
 /**
@@ -28,5 +33,17 @@ public class ProcessorTestUtils {
   public static Iterable<? extends Processor> bsoneerProcessors() {
     return Arrays.asList(
         new BsonProcessor());
+  }
+  
+  public static JavaFileObject codecFor(String clazz) throws IOException{
+	  StringBuffer sb = new StringBuffer();
+	  BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(ProcessorTestUtils.class.getResourceAsStream("codecTemplate.txt")));
+	  String line;
+	  while((line = bufferedReader.readLine()) != null){
+		  sb.append(line).append("\n");
+//		  $$CLASS_NAME$$
+	  }
+	  
+	  return JavaFileObjects.forSourceString(clazz, sb.toString().replaceAll("\\$\\$CLASS_NAME\\$\\$", clazz));
   }
 }

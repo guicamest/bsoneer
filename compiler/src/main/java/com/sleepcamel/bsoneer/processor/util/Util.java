@@ -105,31 +105,42 @@ public class Util {
 				continue;
 			}
 
-			Map<String, Object> result = new LinkedHashMap<String, Object>();
-			for (Method m : annotationType.getMethods()) {
-				result.put(m.getName(), m.getDefaultValue());
-			}
-			for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e : annotation
-					.getElementValues().entrySet()) {
-				String name = e.getKey().getSimpleName().toString();
-				Object value = e.getValue().accept(VALUE_EXTRACTOR, null);
-				Object defaultValue = result.get(name);
-				if (!lenientIsInstance(defaultValue.getClass(), value)) {
-					throw new IllegalStateException(
-							String.format(
-									"Value of %s.%s is a %s but expected a %s\n    value: %s",
-									annotationType,
-									name,
-									value.getClass().getName(),
-									defaultValue.getClass().getName(),
-									value instanceof Object[] ? Arrays
-											.toString((Object[]) value) : value));
-				}
-				result.put(name, value);
-			}
-			return result;
+			return parseAnnotationMirror(annotationType, annotation);
 		}
 		return null; // Annotation not found.
+	}
+	
+	private static Map<String, Object> parseAnnotationMirror(Class<?> annClass, AnnotationMirror annotation){
+		if ( annClass == null ){
+			// Do our best...
+			try {
+				annClass = Class.forName(annotation.getAnnotationType().toString());
+			} catch (ClassNotFoundException e1) {
+			}
+		}
+		Map<String, Object> result = new LinkedHashMap<String, Object>();
+		for (Method m : annClass.getMethods()) {
+			result.put(m.getName(), m.getDefaultValue());
+		}
+		for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e : annotation
+				.getElementValues().entrySet()) {
+			String name = e.getKey().getSimpleName().toString();
+			Object value = e.getValue().accept(VALUE_EXTRACTOR, null);
+			Object defaultValue = result.get(name);
+			if (!lenientIsInstance(defaultValue.getClass(), value)) {
+//				throw new IllegalStateException(
+//						String.format(
+//								"Value of %s.%s is a %s but expected a %s\n    value: %s",
+//								annClass,
+//								name,
+//								value.getClass().getName(),
+//								defaultValue.getClass().getName(),
+//								value instanceof Object[] ? Arrays
+//										.toString((Object[]) value) : value));
+			}
+			result.put(name, value);
+		}
+		return result;
 	}
 
 	private static final AnnotationValueVisitor<Object, Void> VALUE_EXTRACTOR =
@@ -143,6 +154,10 @@ public class Util {
 				}
 				return s;
 			}
+			
+			public Object visitAnnotation(AnnotationMirror a, Void p) {
+				return parseAnnotationMirror(null, a);
+			};
 
 			@Override
 			public Object visitType(TypeMirror t, Void p) {

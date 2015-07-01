@@ -20,6 +20,7 @@ import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static com.sleepcamel.bsoneer.tests.integration.ProcessorTestUtils.bsoneerProcessors;
 import static org.truth0.Truth.ASSERT;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import javax.tools.JavaFileObject;
@@ -69,6 +70,37 @@ final public class BsonGeneratorTest {
 		ASSERT.about(javaSource()).that(sourceFile)
 				.processedWith(bsoneerProcessors()).failsToCompile()
 				.withErrorContaining(BsonProcessor.NO_DEFAULT_CONSTRUCTOR);
+	}
+	
+	@Test
+	public void testBsoneesGeneration() throws IOException {
+		JavaFileObject dogSourceFile = JavaFileObjects.forSourceString(
+				"Dog",
+				Joiner.on("\n").join("class Dog {", "  protected Dog(){}",
+						"  int a;", "}"));
+		
+		JavaFileObject personSourceFile = JavaFileObjects.forSourceString(
+				"Person",
+				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
+						"import com.sleepcamel.bsoneer.Bsonees;",
+						"@Bsonees({@Bsonee(Person.class), @Bsonee(Dog.class)})", "class Person {", "  protected Person(){}",
+						"  int a;", "}"));
+		ASSERT.about(javaSources()).that(Arrays.asList(personSourceFile, dogSourceFile))
+				.processedWith(bsoneerProcessors()).compilesWithoutError().and()
+				.generatesSources(ProcessorTestUtils.codecFor("Person"), ProcessorTestUtils.codecFor("Dog"));
+	}
+	
+	@Test
+	public void testBsoneesGenerationFail_noValueInsideBsonee() {
+		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
+				"Person",
+				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
+						"import com.sleepcamel.bsoneer.Bsonees;",
+						"@Bsonees({@Bsonee()})", "class Person {", "  protected Person(){}",
+						"  int a;", "}"));
+		ASSERT.about(javaSource()).that(sourceFile)
+				.processedWith(bsoneerProcessors()).failsToCompile()
+				.withErrorContaining(BsonProcessor.BSONEE_INSIDE_BSONESS_CANNOT_BE_EMPTY);
 	}
 
 	@Test

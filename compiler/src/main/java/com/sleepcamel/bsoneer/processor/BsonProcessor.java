@@ -36,6 +36,7 @@ import javax.lang.model.util.SimpleElementVisitor6;
 import javax.tools.Diagnostic;
 
 import com.sleepcamel.bsoneer.Bsonee;
+import com.sleepcamel.bsoneer.Bsonees;
 import com.sleepcamel.bsoneer.processor.generators.AnnotationInfo;
 import com.sleepcamel.bsoneer.processor.generators.BsoneeBsonGenerator;
 import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecGenerator;
@@ -44,7 +45,7 @@ import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecRegistryGenerator;
 import com.sleepcamel.bsoneer.processor.util.Util;
 import com.squareup.javapoet.JavaFile;
 
-@SupportedAnnotationTypes({ "com.sleepcamel.bsoneer.Bsonee" })
+@SupportedAnnotationTypes({ "com.sleepcamel.bsoneer.Bsonee", "com.sleepcamel.bsoneer.Bsonees" })
 public class BsonProcessor extends AbstractProcessor {
 
 	public static final String IT_IS_NOT_A_CLASS = "It IS NOT a class";
@@ -53,6 +54,7 @@ public class BsonProcessor extends AbstractProcessor {
 	public static final String CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME = "Cannot use idProperty and idGenerator at the same time";
 	public static final String ID_PROPERTY_NOT_FOUND = "IdProperty not found";
 	public static final String ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR = "IdGenerator must have a default public constructor";
+	public static final String BSONEE_INSIDE_BSONESS_CANNOT_BE_EMPTY = "@Bsonee inside @Bsoness must have a value";
 
 	SimpleElementVisitor6<Boolean, Void> noArgsConstructorVisitor = new SimpleElementVisitor6<Boolean, Void>() {
 		public Boolean visitExecutable(ExecutableElement t, Void p) {
@@ -91,60 +93,32 @@ public class BsonProcessor extends AbstractProcessor {
 		return !generated.isEmpty();
 	}
 
+	@SuppressWarnings("unchecked")
 	private Set<AnnotationInfo> findBsoneedClassNames(RoundEnvironment env) {
 		Set<AnnotationInfo> toGenerate = new LinkedHashSet<AnnotationInfo>();
+		for (Element element : env.getElementsAnnotatedWith(Bsonees.class)) {
+			Map<String, Object> annotation = Util.getAnnotation(Bsonees.class,
+					element);
+			Object object = annotation.get("value");
+			if ( object != null && object.getClass().isArray() ){
+				Object[] bsons = (Object[]) object;
+				for (int i = 0; i < bsons.length; i++) {
+					Map<String, Object> bsonAnnotation = (Map<String, Object>) bsons[i];
+					if ( bsonAnnotation.get("value") instanceof Class ){
+						String clazzName = Util.rawTypeToString(element.asType(), '.');
+						error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
+								+ BSONEE_INSIDE_BSONESS_CANNOT_BE_EMPTY, element);
+					}
+					processBsoneeAnnotation(toGenerate, element, bsonAnnotation);
+				}
+			}
+		}
+		
 		for (Element element : env.getElementsAnnotatedWith(Bsonee.class)) {
 			Map<String, Object> annotation = Util.getAnnotation(Bsonee.class,
 					element);
 			
-			Object object = annotation.get("value");
-			TypeMirror tm = null;
-			if (object instanceof Class) {
-				if (!element.getKind().equals(ElementKind.CLASS)) {
-					String clazzName = Util.rawTypeToString(element.asType(), '.');
-					error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
-							+ IT_IS_NOT_A_CLASS, element);
-				} else {
-					tm = element.asType();
-				}
-			} else if (object instanceof TypeMirror) {
-				tm = (TypeMirror) object;
-			}
-			if (tm != null) {
-				Object idGenerator = annotation.get("idGenerator");
-				TypeMirror idGeneratorType = null;
-				boolean customGenerator = false;
-				if ( idGenerator instanceof Class ){
-					// Default id generator
-					idGeneratorType = processingEnv.getElementUtils().getTypeElement(((Class<?>) idGenerator).getCanonicalName()).asType();
-				} else if (idGenerator instanceof TypeMirror){
-					// Custom id generator
-					customGenerator = true;
-					idGeneratorType = (TypeMirror) idGenerator;
-					if ( ! Util.hasDefaultConstructor(idGeneratorType) ){
-						String clazzName = Util.rawTypeToString(tm, '.');
-						error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
-								+ ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR, element);
-						continue;
-					}
-				} else {
-					error("[Bsonee Internal Error] Unknown class for idGenerator: "+idGenerator.getClass(), element);
-					continue;
-				}
-				AnnotationInfo annotationInfo = new AnnotationInfo(tm, (String)annotation.get("id"), (Boolean)annotation.get("keepIdProperty"), idGeneratorType, customGenerator);
-				if ( annotationInfo.hasCustomId() && annotationInfo.hasCustomGenerator() ){
-					String clazzName = Util.rawTypeToString(tm, '.');
-					error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
-							+ CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME, element);
-					continue;
-				}
-				if (!addTypeAndSuperTypes(toGenerate, annotationInfo)) {
-					String clazzName = Util.rawTypeToString(tm, '.');
-					error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
-							+ NO_DEFAULT_CONSTRUCTOR, element);
-					continue;
-				}
-			}
+			processBsoneeAnnotation(toGenerate, element, annotation);
 		}
 		for (AnnotationInfo c : toGenerate) {
 			if (generated.contains(c)) {
@@ -155,6 +129,58 @@ public class BsonProcessor extends AbstractProcessor {
 			}
 		}
 		return toGenerate;
+	}
+
+	private void processBsoneeAnnotation(Set<AnnotationInfo> toGenerate, Element element,
+			Map<String, Object> annotation) {
+		Object object = annotation.get("value");
+		TypeMirror tm = null;
+		if (object instanceof Class) {
+			if (!element.getKind().equals(ElementKind.CLASS)) {
+				String clazzName = Util.rawTypeToString(element.asType(), '.');
+				error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
+						+ IT_IS_NOT_A_CLASS, element);
+			} else {
+				tm = element.asType();
+			}
+		} else if (object instanceof TypeMirror) {
+			tm = (TypeMirror) object;
+		}
+		if (tm != null) {
+			Object idGenerator = annotation.get("idGenerator");
+			TypeMirror idGeneratorType = null;
+			boolean customGenerator = false;
+			if ( idGenerator instanceof Class ){
+				// Default id generator
+				idGeneratorType = processingEnv.getElementUtils().getTypeElement(((Class<?>) idGenerator).getCanonicalName()).asType();
+			} else if (idGenerator instanceof TypeMirror){
+				// Custom id generator
+				customGenerator = true;
+				idGeneratorType = (TypeMirror) idGenerator;
+				if ( ! Util.hasDefaultConstructor(idGeneratorType) ){
+					String clazzName = Util.rawTypeToString(tm, '.');
+					error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
+							+ ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR, element);
+					return;
+				}
+			} else {
+				error("[Bsonee Internal Error] Unknown class for idGenerator: "+idGenerator.getClass(), element);
+				return;
+			}
+			AnnotationInfo annotationInfo = new AnnotationInfo(tm, (String)annotation.get("id"), (Boolean)annotation.get("keepIdProperty"), idGeneratorType, customGenerator);
+			if ( annotationInfo.hasCustomId() && annotationInfo.hasCustomGenerator() ){
+				String clazzName = Util.rawTypeToString(tm, '.');
+				error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
+						+ CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME, element);
+				return;
+			}
+			if (!addTypeAndSuperTypes(toGenerate, annotationInfo)) {
+				String clazzName = Util.rawTypeToString(tm, '.');
+				error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
+						+ NO_DEFAULT_CONSTRUCTOR, element);
+				return;
+			}
+		}
 	}
 	
 	/*
