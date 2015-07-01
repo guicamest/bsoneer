@@ -1,7 +1,7 @@
 Bsoneer [![Build Status](https://travis-ci.org/guicamest/bsoneer.svg?branch=master)](https://travis-ci.org/guicamest/bsoneer/branches)
 ========
 
-A fast dependency injector for Android and Java.
+Mongo 3.0 library to generate codecs for existing beans
 
 ### How to use
 
