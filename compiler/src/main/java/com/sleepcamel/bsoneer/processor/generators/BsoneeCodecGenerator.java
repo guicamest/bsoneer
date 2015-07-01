@@ -20,6 +20,7 @@ import com.sleepcamel.bsoneer.processor.GeneratedClasses;
 import com.sleepcamel.bsoneer.processor.util.ProcessorJavadocs;
 import com.sleepcamel.bsoneer.processor.util.Util;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.MethodSpec.Builder;
@@ -33,13 +34,11 @@ public class BsoneeCodecGenerator {
 	private TypeElement type;
 	private ProcessingEnvironment processingEnv;
 	private AnnotationInfo ai;
-	private ClassName superType;
 	private TypeElement bsoneerIdGenerator;
 
 	public BsoneeCodecGenerator(TypeElement type, AnnotationInfo ai, ProcessingEnvironment processingEnv) {
 		this.type = type;
 		this.ai = ai;
-		this.superType = Util.getSuperType(type, processingEnv);
 		this.processingEnv = processingEnv;
 		bsoneerIdGenerator = processingEnv.getElementUtils()
 				.getTypeElement("com.sleepcamel.bsoneer.IdGenerator");
@@ -117,18 +116,17 @@ public class BsoneeCodecGenerator {
 			error(BsonProcessor.ID_PROPERTY_NOT_FOUND, type);
 		}
 		if ( !ai.hasCustomId() ){
-			methodSpec.beginControlFlow("if (encoderContext.isEncodingCollectibleDocument())");
-			methodSpec.addStatement("writer.writeName(\"_id\")");
+			com.squareup.javapoet.CodeBlock.Builder cb = CodeBlock.builder();
 			if (customGeneratorIsBsonned()) {
-				methodSpec.addStatement("Object vid = (($T)idGenerator).generate(value)",
+				cb.addStatement("Object vid = (($T)idGenerator).generate(value)",
 						ClassName.get(bsoneerIdGenerator));
 			} else {
-				methodSpec.addStatement("Object vid = idGenerator.generate()");
+				cb.addStatement("Object vid = idGenerator.generate()");
 			}
-			methodSpec.addStatement("$T cid = registry.get(vid.getClass())",
+			cb.addStatement("$T cid = registry.get(vid.getClass())",
 					Util.bsonCodecTypeName());
-			methodSpec.addStatement("encoderContext.encodeWithChildContext(cid, writer, vid)");
-			methodSpec.endControlFlow();
+			cb.addStatement("encoderContext.encodeWithChildContext(cid, writer, vid)");
+			methodSpec.addCode(getterVisitor.writeAsId(cb.build(), true));
 		}
 		
 		getterVisitor.writeBody(methodSpec);

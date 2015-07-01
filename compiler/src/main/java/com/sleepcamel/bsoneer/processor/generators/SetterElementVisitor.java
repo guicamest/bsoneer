@@ -60,6 +60,9 @@ class SetterElementVisitor extends BaseVisitor {
 			addSetterCode(setterMethod, "String", vi, "$T.valueOf", ClassName.get(key));
 		} else if (isJavaCollection(key)) {
 			addSetterCodeForCollection(setterMethod, vi, getJavaCollectionImplementationClass(key));
+//		} else if (key.getKind() == TypeKind.ARRAY) { 
+			// TODO Implement array deserialization
+//			addSetterCodeForCollection(setterMethod, vi, k);
 		} else {
 			addSetterCode(setterMethod, readMethod, vi, null);
 		}
@@ -98,14 +101,20 @@ class SetterElementVisitor extends BaseVisitor {
 		getAccessName += vi.isMethod() ? "()" : "";
 		
 		String setAccessName = vi.getMethod();
-		setAccessName += vi.isMethod() ? "(value)" : " = value";
+		setAccessName += vi.isMethod() ? "($L)" : " = $L";
 		
-		// TODO Check if collection is initialized with an implementation
+		setterMethod.addStatement("$T bsonType = reader.getCurrentBsonType()",  Util.bsonTypeTypeName());
+		setterMethod.beginControlFlow("if (bsonType == $T.NULL)", Util.bsonTypeTypeName());
+		setterMethod.addStatement("reader.readNull()");
+		setterMethod.addStatement("instance."+setAccessName,"null");
+		setterMethod.addStatement("return");
+		setterMethod.endControlFlow();
+		
 		setterMethod.addStatement("$T value = instance.$L", vi.getTypeMirror(), getAccessName);
 		
 		setterMethod.beginControlFlow("if (value == null)");
 		setterMethod.addStatement("value = new $T()", TypeName.get(collImplClass));
-		setterMethod.addStatement("instance."+setAccessName);
+		setterMethod.addStatement("instance."+setAccessName,"value");
 		setterMethod.endControlFlow();
 		
 		setterMethod.addStatement("reader.readStartArray()");

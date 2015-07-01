@@ -28,6 +28,9 @@ public class Person {
 	Set<String> hs = new HashSet<String>();
 	private HashSet<String> hss;
 	BasicBSONList bbl;
+	String[] strings;
+	double[] doubles;
+	double[][][] doublesss;
 
 	protected Person(){}
 	

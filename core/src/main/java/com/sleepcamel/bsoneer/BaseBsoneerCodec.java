@@ -94,6 +94,8 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 		writer.writeEndDocument();
 	}
 	
+	protected void encodeVariables(BsonWriter writer, T value, EncoderContext encoderContext){};
+	
 	/**
 	 * To be used if and only if it belongs to {@link java.util} package
 	 * @param writer
@@ -135,8 +137,38 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 		}
 		writer.writeEndArray();
 	}
-
-    protected void encodeVariables(BsonWriter writer, T value, EncoderContext encoderContext){};
+	
+	protected void encode(BsonWriter writer, boolean[] coll, EncoderContext encoderContext) {
+		writer.writeStartArray();
+		for (boolean next : coll) {
+			writer.writeBoolean(next);
+		}
+		writer.writeEndArray();
+	}
+	
+	protected void encode(BsonWriter writer, int[] coll, EncoderContext encoderContext) {
+		writer.writeStartArray();
+		for (int next : coll) {
+			writer.writeInt32(next);
+		}
+		writer.writeEndArray();
+	}
+	
+	protected void encode(BsonWriter writer, long[] coll, EncoderContext encoderContext) {
+		writer.writeStartArray();
+		for (long next : coll) {
+			writer.writeInt64(next);
+		}
+		writer.writeEndArray();
+	}
+	
+	protected void encode(BsonWriter writer, double[] coll, EncoderContext encoderContext) {
+		writer.writeStartArray();
+		for (double next : coll) {
+			writer.writeDouble(next);
+		}
+		writer.writeEndArray();
+	}
 
     /**
 	 * {@inhericDoc}
@@ -147,16 +179,16 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 		reader.readStartDocument();
 		while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
 			String fieldName = reader.readName();
-			BsonType bsonType = reader.getCurrentBsonType();
-			if (bsonType == BsonType.NULL) {
-				reader.readNull();
-				continue;
-			}
 			BsoneeBaseSetter<T> bsoneeBaseSetter = settersByName.get(fieldName);
 			if (bsoneeBaseSetter != null) {
 				bsoneeBaseSetter.set(instance, reader, decoderContext);
 			} else {
 				logger.warn("No setter for " + fieldName);
+				BsonType bsonType = reader.getCurrentBsonType();
+				if (bsonType == BsonType.NULL) {
+					reader.readNull();
+					continue;
+				}
 				if (bsonType == BsonType.OBJECT_ID) {
 					reader.readObjectId();
 				} else {

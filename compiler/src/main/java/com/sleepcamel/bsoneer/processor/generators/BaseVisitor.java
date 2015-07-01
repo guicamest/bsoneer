@@ -24,6 +24,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
@@ -173,10 +174,31 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 	}
 	
 	protected boolean isJavaCollection(TypeMirror key) {
+		if ( key.getKind() != TypeKind.DECLARED ){
+			return false;
+		}
+		TypeMirror erasuredType = typeUtils.erasure(key);
 		return elementUtils.getPackageElement("java.util")
-				.equals(elementUtils.getPackageOf(typeUtils.asElement(key))) && 
-				typeUtils.isAssignable(typeUtils.erasure(key),
+				.equals(elementUtils.getPackageOf(typeUtils.asElement(erasuredType))) && 
+				typeUtils.isAssignable(erasuredType,
 				typeUtils.erasure(elementUtils.getTypeElement(Collection.class.getCanonicalName()).asType()));
+	}
+	
+	protected TypeMirror boxedArray(TypeMirror tm){
+		if ( tm.getKind() != TypeKind.ARRAY ){
+			return null;
+		}
+		ArrayType at = (ArrayType) tm;
+		TypeMirror componentType = at.getComponentType();
+		TypeKind kind = componentType.getKind();
+
+		TypeMirror boxed = componentType;
+		if (kind == TypeKind.ARRAY) {
+			boxed = boxedArray(boxed);
+		} else if (kind.isPrimitive()) {
+			boxed = typeUtils.boxedClass((PrimitiveType) boxed).asType();
+		}
+		return typeUtils.getArrayType(boxed);
 	}
 	
 	protected TypeMirror typeArg(TypeMirror tm){
