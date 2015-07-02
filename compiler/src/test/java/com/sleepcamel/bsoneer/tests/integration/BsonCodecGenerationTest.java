@@ -128,7 +128,7 @@ public final class BsonCodecGenerationTest {
 										"	@Override",
 										"	@SuppressWarnings({\"unchecked\"})",
 										"	public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {",
-										"		if ( clazz == Person.class ) {",
+										"		if (clazz == Person.class) {",
 										"			return (Codec<T>) new PersonBsoneeCodec(registry);",
 										"		}", "		return null;", "	}", "}"));
 
@@ -142,9 +142,9 @@ public final class BsonCodecGenerationTest {
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee(id=\"a\")", "class Person {", "  protected Person(){}",
-						"  public Person(int e){}", "  int a;", "}"));
-		
+						"@Bsonee(id=\"a\")", "class Person {", "  protected Person() {}",
+						"  public Person(int e) {}", "  int a;", "}"));
+
 		JavaFileObject expectedCodec = JavaFileObjects
 				.forSourceString(
 						"PersonBsoneeCodec",
@@ -207,14 +207,14 @@ public final class BsonCodecGenerationTest {
 		ASSERT.about(javaSource()).that(sourceFile)
 			.processedWith(bsoneerProcessors()).compilesWithoutError().and().generatesSources(expectedCodec);
 	}
-	
+
 	@Test
 	public void okBsonneCustomIdKeepIdProperty() {
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee(id=\"a\", keepIdProperty=true)", "class Person {", "  protected Person(){}",
-						"  public Person(int e){}", "  int a;", "}"));
+						"@Bsonee(id=\"a\", keepIdProperty=true)", "class Person {", "  protected Person() {}",
+						"  public Person(int e) {}", "  int a;", "}"));
 		JavaFileObject expectedCodec = JavaFileObjects
 				.forSourceString(
 						"PersonBsoneeCodec",

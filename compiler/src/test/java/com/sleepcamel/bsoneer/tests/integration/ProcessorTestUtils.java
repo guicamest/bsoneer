@@ -34,16 +34,16 @@ public class ProcessorTestUtils {
     return Arrays.asList(
         new BsonProcessor());
   }
-  
+
   public static JavaFileObject codecFor(String clazz) throws IOException{
 	  StringBuffer sb = new StringBuffer();
 	  BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(ProcessorTestUtils.class.getResourceAsStream("codecTemplate.txt")));
 	  String line;
-	  while((line = bufferedReader.readLine()) != null){
+	  while((line = bufferedReader.readLine()) != null) {
 		  sb.append(line).append("\n");
 //		  $$CLASS_NAME$$
 	  }
-	  
+
 	  return JavaFileObjects.forSourceString(clazz, sb.toString().replaceAll("\\$\\$CLASS_NAME\\$\\$", clazz));
   }
 }

@@ -39,17 +39,17 @@ public @interface Bsonee {
 	 * 	If it is empty, the annotated class is used for Codec generation
 	 */
 	Class<?> value() default Object.class;
-	
+
 	/**
 	 * @return Name of the property used as id for this entity
 	 */
 	String id() default "";
-	
+
 	/**
 	 * If entity has a custom id, this indicates whether the field used as id should be kept when serializing or not
 	 * @return Whether the field used as id should be kept when serializing or not
 	 */
 	boolean keepIdProperty() default false;
-	
+
 	Class<? extends IdGenerator> idGenerator() default ObjectIdGenerator.class;
 }

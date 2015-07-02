@@ -76,10 +76,10 @@ public class BsoneeBsonGenerator {
 				.addParameter(Util.bsonRegistryParameter());
 		addBodyToMethod(toBsonDocumentMethod);
 		bsoneeBuilder.addMethod(toBsonDocumentMethod.build());
-		
+
 		TypeName bsoneeParameterized = ParameterizedTypeName.get(
 				bsoneerBsonName, cTypeName);
-		
+
 		Builder bsonMethodBuilder = MethodSpec.methodBuilder("bson")
 				.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
 				.returns(Util.bsonTypeName())

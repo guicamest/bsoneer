@@ -75,7 +75,7 @@ public class BsoneeCodecProviderGenerator {
 
 		for (ClassName entityClassName : generated) {
 			ClassName bsoneerCodecClassName = Util.bsoneeName(entityClassName, GeneratedClasses.BSONEE_CODEC_SUFFIX);
-			methodSpec.beginControlFlow("if ( clazz == $T.class )", entityClassName);
+			methodSpec.beginControlFlow("if (clazz == $T.class)", entityClassName);
 			methodSpec.addStatement("return (Codec<T>) new $T(registry)", bsoneerCodecClassName);
 			methodSpec.endControlFlow();
 		}

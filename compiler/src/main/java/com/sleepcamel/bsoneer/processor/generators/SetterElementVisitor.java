@@ -43,30 +43,30 @@ class SetterElementVisitor extends BaseVisitor {
 		}
 		codecBuilder.addMethod(setupSetterBuilder.build());
 	}
-	
+
 	private TypeSpec.Builder createSetterClass(ClassName entityClassName, TypeName setterIface, String setterClassName, VarInfo vi) {
 		TypeSpec.Builder setterBuilder = TypeSpec.classBuilder(setterClassName);
-		
+
 		TypeMirror key = getReplaceTypeIfTypeVar(vi);
 		String readMethod = passThroughMappings.get(key.toString());
-		
+
 		Builder setterMethod = MethodSpec.methodBuilder("set")
 				.addParameter(ParameterSpec.builder(entityClassName, "instance").build())
 				.addParameter(Util.bsonReaderParameter())
 				.addParameter(Util.bsonDecoderContextParameter())
 				.addModifiers(Modifier.PUBLIC);
-		
+
 		if (Util.isEnum(key)) {
 			addSetterCode(setterMethod, "String", vi, "$T.valueOf", ClassName.get(key));
 		} else if (isJavaCollection(key)) {
 			addSetterCodeForCollection(setterMethod, vi);
-//		} else if (key.getKind() == TypeKind.ARRAY) { 
+//		} else if (key.getKind() == TypeKind.ARRAY) {
 			// TODO Implement array deserialization
 //			addSetterCodeForCollection(setterMethod, vi, k);
 		} else {
 			addSetterCode(setterMethod, readMethod, vi, null);
 		}
-		
+
 		return setterBuilder.addMethod(setterMethod.build()).addSuperinterface(setterIface);
 	}
 
@@ -92,44 +92,47 @@ class SetterElementVisitor extends BaseVisitor {
 		}
 	}
 
-	private void addSetterCodeForCollection(Builder setterMethod, VarInfo vi){
+	private void addSetterCodeForCollection(Builder setterMethod, VarInfo vi) {
 		String getAccessName = vi.getMethod();
-		if ( vi.isMethod() ){
+		if (vi.isMethod()) {
 			// TODO Support isSmth() getters
-			getAccessName = "get"+getAccessName.substring(3);
+			getAccessName = "get" + getAccessName.substring(3);
 		}
 		getAccessName += vi.isMethod() ? "()" : "";
-		
+
 		String setAccessName = vi.getMethod();
 		setAccessName += vi.isMethod() ? "($L)" : " = $L";
-		
+
 		TypeMirror collectionTypeMirror = vi.getTypeMirror();
 		TypeMirror collectionTypeArgument = collectionTypeArgument(vi, collectionTypeMirror);
 		boolean collectionTypeArgumentIsVar = collectionTypeArgument.getKind() == TypeKind.TYPEVAR;
-		
-		TypeMirror javaImplementationCollectionClass = getJavaCollectionClass(vi, collectionTypeMirror, true, collectionTypeArgumentIsVar);
-		TypeMirror javaDeclarationCollectionClass = getJavaCollectionClass(vi, collectionTypeMirror, false, collectionTypeArgumentIsVar);
-		
+
+		TypeMirror javaImplementationCollectionClass = getJavaCollectionClass(vi, collectionTypeMirror,
+				true, collectionTypeArgumentIsVar);
+		TypeMirror javaDeclarationCollectionClass = getJavaCollectionClass(vi, collectionTypeMirror,
+				false, collectionTypeArgumentIsVar);
+
 		setterMethod.addStatement("$T bsonType = reader.getCurrentBsonType()",  Util.bsonTypeTypeName());
 		setterMethod.beginControlFlow("if (bsonType == $T.NULL)", Util.bsonTypeTypeName());
 		setterMethod.addStatement("reader.readNull()");
-		setterMethod.addStatement("instance."+setAccessName,"null");
+		setterMethod.addStatement("instance." + setAccessName, "null");
 		setterMethod.addStatement("return");
 		setterMethod.endControlFlow();
-		
+
 		setterMethod.addStatement("$T value = instance.$L", javaDeclarationCollectionClass, getAccessName);
-		
+
 		setterMethod.beginControlFlow("if (value == null)");
 		setterMethod.addStatement("value = new $T()", TypeName.get(javaImplementationCollectionClass));
-		setterMethod.addStatement("instance."+setAccessName,"value");
+		setterMethod.addStatement("instance." + setAccessName, "value");
 		setterMethod.endControlFlow();
-		
+
 		setterMethod.addStatement("reader.readStartArray()");
-		
+
 		setterMethod.beginControlFlow("while (reader.readBsonType() != $T.END_OF_DOCUMENT)", Util.bsonTypeTypeName());
-		if ( !collectionTypeArgumentIsVar ){
-			setterMethod.addStatement("value.add(($T)defaultReader.readValue(reader, decoderContext))", collectionTypeArgument);
-		}else{
+		if (!collectionTypeArgumentIsVar) {
+			setterMethod.addStatement("value.add(($T)defaultReader.readValue(reader, decoderContext))",
+					collectionTypeArgument);
+		} else {
 			setterMethod.addStatement("value.add(defaultReader.readValue(reader, decoderContext))");
 		}
 		setterMethod.endControlFlow();

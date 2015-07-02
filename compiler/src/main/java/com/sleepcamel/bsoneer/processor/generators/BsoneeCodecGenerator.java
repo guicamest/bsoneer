@@ -112,10 +112,10 @@ public class BsoneeCodecGenerator {
 		for (Element ee : getMethods(type)) {
 			ee.accept(getterVisitor, false);
 		}
-		if ( getterVisitor.customIdNotFound() ){
+		if (getterVisitor.customIdNotFound()) {
 			error(BsonProcessor.ID_PROPERTY_NOT_FOUND, type);
 		}
-		if ( !ai.hasCustomId() ){
+		if (!ai.hasCustomId()) {
 			com.squareup.javapoet.CodeBlock.Builder cb = CodeBlock.builder();
 			if (customGeneratorIsBsonned()) {
 				cb.addStatement("Object vid = (($T)idGenerator).generate(value)",
@@ -128,7 +128,7 @@ public class BsoneeCodecGenerator {
 			cb.addStatement("encoderContext.encodeWithChildContext(cid, writer, vid)");
 			methodSpec.addCode(getterVisitor.writeAsId(cb.build(), true));
 		}
-		
+
 		getterVisitor.writeBody(methodSpec);
 		methodSpec.addStatement("super.encodeVariables(writer,value,encoderContext)");
 
@@ -152,14 +152,14 @@ public class BsoneeCodecGenerator {
 		for (Element ee : getMethods(type)) {
 			ee.accept(setterVisitor, true);
 		}
-		if ( setterVisitor.customIdNotFound() ){
+		if (setterVisitor.customIdNotFound()) {
 			error(BsonProcessor.ID_PROPERTY_NOT_FOUND, type);
 		}
 		setterVisitor.writeBody(codecBuilder, entityClassName);
 	}
-	
+
 	private boolean customGeneratorIsBsonned() {
-		if ( !ai.hasCustomGenerator() ){
+		if (!ai.hasCustomGenerator()) {
 			return false;
 		}
 		TypeMirror idGeneratorType = ai.getIdGeneratorType();
@@ -187,7 +187,7 @@ public class BsoneeCodecGenerator {
 		}
 		return methodsIn;
 	}
-	
+
 	private void error(String msg, Element element) {
 		processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, msg,
 				element);

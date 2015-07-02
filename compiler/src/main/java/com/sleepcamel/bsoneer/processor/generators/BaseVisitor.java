@@ -71,14 +71,15 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 	private AnnotationInfo ai;
 	private boolean foundCustomId = false;
 
-	public BaseVisitor(ProcessingEnvironment processingEnv, String execPrefix, boolean canReturnVoid, int argQty, AnnotationInfo ai) {
+	public BaseVisitor(ProcessingEnvironment processingEnv, String execPrefix, boolean canReturnVoid,
+			int argQty, AnnotationInfo ai) {
 		this.execPrefix = execPrefix;
 		this.canReturnVoid = canReturnVoid;
 		this.argQty = argQty;
 		this.ai = ai;
 		elementUtils = processingEnv.getElementUtils();
 		typeUtils = processingEnv.getTypeUtils();
-		
+
 		addCollectionMapping(BlockingDeque.class, LinkedBlockingDeque.class);
 		addCollectionMapping(BlockingQueue.class, LinkedBlockingDeque.class);
 		addCollectionMapping(Deque.class, LinkedBlockingDeque.class);
@@ -89,13 +90,14 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		addCollectionMapping(NavigableSet.class, TreeSet.class);
 		addCollectionMapping("java.util.concurrent.TransferQueue", "java.util.concurrent.LinkedTransferQueue");
 	}
-	
-	private void addCollectionMapping(Class<?> a, Class<?> b){
+
+	private void addCollectionMapping(Class<?> a, Class<?> b) {
 		addCollectionMapping(a.getCanonicalName(), b.getCanonicalName());
 	}
-	
-	private void addCollectionMapping(String aCanonicalName, String bCanonicalName){
-		collectionMappings.put(typeUtils.erasure(elementUtils.getTypeElement(aCanonicalName).asType()), elementUtils.getTypeElement(bCanonicalName));
+
+	private void addCollectionMapping(String aCanonicalName, String bCanonicalName) {
+		collectionMappings.put(typeUtils.erasure(elementUtils.getTypeElement(aCanonicalName).asType()),
+				elementUtils.getTypeElement(bCanonicalName));
 	}
 
 	public boolean visited(String fieldName) {
@@ -131,21 +133,21 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		addVarInfo(e.getEnclosingElement().asType(), varName, methodName, tm, boxPrimitives);
         return DEFAULT_VALUE;
     }
-	
-	public boolean customIdNotFound(){
+
+	public boolean customIdNotFound() {
 		return ai.hasCustomId() && !foundCustomId;
 	}
-	
-	private void addVarInfo(TypeMirror typeMirror, String varName, String methodName, TypeMirror tm, boolean boxPrimitives){
+
+	private void addVarInfo(TypeMirror typeMirror, String varName, String methodName, TypeMirror tm, boolean boxPrimitives) {
 		boolean accessViaProperty = varName.equals(methodName);
 		String bsonName = varName;
 		boolean customId = ai.hasCustomId() && ai.getIdProperty().equals(varName);
 		String[] otherBsonNames = null;
-		if ( customId ){
+		if (customId) {
 			foundCustomId  = true;
-			if ( !ai.isKeepNonIdProperty() ){
+			if (!ai.isKeepNonIdProperty()) {
 				bsonName = "_id";
-			}else{
+			} else {
 				otherBsonNames = new String[]{"_id"};
 			}
 		}
@@ -153,15 +155,16 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 			if (tm.getKind().isPrimitive() && boxPrimitives) {
 				tm = typeUtils.boxedClass((PrimitiveType) tm).asType();
 			}
-			visitedVars.put(tm, new VarInfo(typeUtils.erasure(typeMirror), varName, methodName, tm, accessViaProperty, bsonName, otherBsonNames));
+			visitedVars.put(tm, new VarInfo(typeUtils.erasure(typeMirror), varName,
+					methodName, tm, accessViaProperty, bsonName, otherBsonNames));
 		}
 	}
-	
+
 	protected TypeMirror getReplaceTypeIfTypeVar(VarInfo vi) {
 		switch (vi.getTypeMirror().getKind()) {
 		case TYPEVAR:
 			TypeMirror replacedTypeFor = ai.getReplacedTypeFor(vi.getVarSource(), vi.getTypeMirror());
-			if ( replacedTypeFor != null ){
+			if (replacedTypeFor != null) {
 				return replacedTypeFor;
 			}
 		default:
@@ -169,20 +172,20 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		}
 		return vi.getTypeMirror();
 	}
-	
+
 	protected boolean isJavaCollection(TypeMirror key) {
-		if ( key.getKind() != TypeKind.DECLARED ){
+		if (key.getKind() != TypeKind.DECLARED) {
 			return false;
 		}
 		TypeMirror erasuredType = typeUtils.erasure(key);
 		return elementUtils.getPackageElement("java.util")
-				.equals(elementUtils.getPackageOf(typeUtils.asElement(erasuredType))) && 
-				typeUtils.isAssignable(erasuredType,
+				.equals(elementUtils.getPackageOf(typeUtils.asElement(erasuredType)))
+				&& typeUtils.isAssignable(erasuredType,
 				typeUtils.erasure(elementUtils.getTypeElement(Collection.class.getCanonicalName()).asType()));
 	}
-	
-	protected TypeMirror boxedArray(TypeMirror tm){
-		if ( tm.getKind() != TypeKind.ARRAY ){
+
+	protected TypeMirror boxedArray(TypeMirror tm) {
+		if (tm.getKind() != TypeKind.ARRAY) {
 			return null;
 		}
 		ArrayType at = (ArrayType) tm;
@@ -197,19 +200,20 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		}
 		return typeUtils.getArrayType(boxed);
 	}
-	
-	protected TypeMirror collectionTypeArgument(VarInfo vi, TypeMirror tm){
+
+	protected TypeMirror collectionTypeArgument(VarInfo vi, TypeMirror tm) {
 		TypeMirror typeMirror = ((DeclaredType) tm).getTypeArguments().get(0);
 		TypeMirror replacedTypeFor = ai.getReplacedTypeFor(vi.getVarSource(), typeMirror);
-		if ( replacedTypeFor == null ) {
+		if (replacedTypeFor == null) {
 			replacedTypeFor = typeMirror;
 		}
 		return replacedTypeFor;
 	}
-	
-	protected TypeMirror getJavaCollectionClass(VarInfo vi, TypeMirror typeMirror, boolean replaceInterfaceForImplementation, boolean collectionTypeArgumentIsVar) {
-		if ( !isJavaCollection(typeMirror) ){
-			throw new RuntimeException("Type "+typeMirror+" is not a java collection");
+
+	protected TypeMirror getJavaCollectionClass(VarInfo vi, TypeMirror typeMirror,
+			boolean replaceInterfaceForImplementation, boolean collectionTypeArgumentIsVar) {
+		if (!isJavaCollection(typeMirror)) {
+			throw new RuntimeException("Type " + typeMirror + " is not a java collection");
 		}
 		DeclaredType declared = (DeclaredType) typeMirror;
 		TypeMirror dt = collectionTypeArgument(vi, declared);
@@ -217,10 +221,10 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		TypeElement typeElem = null;
 		if (ElementKind.INTERFACE.equals(declared.asElement().getKind()) && replaceInterfaceForImplementation) {
 			typeElem = collectionMappings.get(erasured);
-		}else{
+		} else {
 			typeElem = elementUtils.getTypeElement(erasured.toString());
 		}
-		if ( collectionTypeArgumentIsVar ){
+		if (collectionTypeArgumentIsVar) {
 			return typeUtils.erasure(typeElem.asType());
 		}
 		return typeUtils.getDeclaredType(typeElem, dt);

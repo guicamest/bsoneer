@@ -15,14 +15,15 @@ class VarInfo {
 	private List<String> bsonNames;
 	final private TypeMirror varSource;
 
-	public VarInfo(TypeMirror varSource, String name, String methodName, TypeMirror typeMirror, boolean accessViaProperty, String bsonName, String ... otherBsonNames) {
+	public VarInfo(TypeMirror varSource, String name, String methodName, TypeMirror typeMirror,
+			boolean accessViaProperty, String bsonName, String ... otherBsonNames) {
 		this.varSource = varSource;
 		this.name = name;
 		this.method = methodName;
 		this.typeMirror = typeMirror;
 		this.bsonNames = new ArrayList<String>();
 		bsonNames.add(bsonName);
-		if ( otherBsonNames != null ){
+		if (otherBsonNames != null) {
 			bsonNames.addAll(Arrays.asList(otherBsonNames));
 		}
 		this.accessViaProperty = accessViaProperty;
@@ -53,7 +54,7 @@ class VarInfo {
 	public String getBsonName() {
 		return bsonNames.get(0);
 	}
-	
+
 	public List<String> getBsonNames() {
 		return bsonNames;
 	}

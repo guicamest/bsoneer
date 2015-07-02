@@ -38,10 +38,10 @@ final public class BsoneeCodecRegistryGenerationTest {
 	        "import com.sleepcamel.bsoneer.Bsonee;",
 	        "@Bsonee",
 	        "class Person {",
-	        "  Person(){}",
+	        "  Person() {}",
 	        "  int a;",
 	        "}"));
-	    
+
 	    JavaFileObject expectedRegistry = ProcessorTestUtils.codecFor("Person");
 
 	    ASSERT.about(javaSource()).that(sourceFile).processedWith(bsoneerProcessors()).compilesWithoutError().and().generatesSources(expectedRegistry);

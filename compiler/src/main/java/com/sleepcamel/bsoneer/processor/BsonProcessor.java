@@ -52,9 +52,11 @@ public class BsonProcessor extends AbstractProcessor {
 	public static final String IT_IS_NOT_A_CLASS = "It IS NOT a class";
 	public static final String CANNOT_GENERATE_CODE_FOR = "Cannot generate code for ";
 	public static final String NO_DEFAULT_CONSTRUCTOR = "Class does not have a default constructor or it is private";
-	public static final String CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME = "Cannot use idProperty and idGenerator at the same time";
+	public static final String CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME = "Cannot use idProperty and"
+			+ " idGenerator at the same time";
 	public static final String ID_PROPERTY_NOT_FOUND = "IdProperty not found";
-	public static final String ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR = "IdGenerator must have a default public constructor";
+	public static final String ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR = "IdGenerator must have a default"
+			+ " public constructor";
 	public static final String BSONEE_INSIDE_BSONESS_CANNOT_BE_EMPTY = "@Bsonee inside @Bsoness must have a value";
 
 	SimpleElementVisitor6<Boolean, Void> noArgsConstructorVisitor = new SimpleElementVisitor6<Boolean, Void>() {
@@ -101,11 +103,11 @@ public class BsonProcessor extends AbstractProcessor {
 			Map<String, Object> annotation = Util.getAnnotation(Bsonees.class,
 					element);
 			Object object = annotation.get("value");
-			if ( object != null && object.getClass().isArray() ){
+			if (object != null && object.getClass().isArray()) {
 				Object[] bsons = (Object[]) object;
 				for (int i = 0; i < bsons.length; i++) {
 					Map<String, Object> bsonAnnotation = (Map<String, Object>) bsons[i];
-					if ( bsonAnnotation.get("value") instanceof Class ){
+					if (bsonAnnotation.get("value") instanceof Class) {
 						String clazzName = Util.rawTypeToString(element.asType(), '.');
 						error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
 								+ BSONEE_INSIDE_BSONESS_CANNOT_BE_EMPTY, element);
@@ -114,11 +116,11 @@ public class BsonProcessor extends AbstractProcessor {
 				}
 			}
 		}
-		
+
 		for (Element element : env.getElementsAnnotatedWith(Bsonee.class)) {
 			Map<String, Object> annotation = Util.getAnnotation(Bsonee.class,
 					element);
-			
+
 			processBsoneeAnnotation(toGenerate, element, annotation);
 		}
 		for (AnnotationInfo c : toGenerate) {
@@ -151,25 +153,33 @@ public class BsonProcessor extends AbstractProcessor {
 			Object idGenerator = annotation.get("idGenerator");
 			TypeMirror idGeneratorType = null;
 			boolean customGenerator = false;
-			if ( idGenerator instanceof Class ){
+			if (idGenerator instanceof Class) {
 				// Default id generator
-				idGeneratorType = processingEnv.getElementUtils().getTypeElement(((Class<?>) idGenerator).getCanonicalName()).asType();
-			} else if (idGenerator instanceof TypeMirror){
+				idGeneratorType = processingEnv.getElementUtils()
+						.getTypeElement(
+							((Class<?>) idGenerator).getCanonicalName()
+						).asType();
+			} else if (idGenerator instanceof TypeMirror) {
 				// Custom id generator
 				customGenerator = true;
 				idGeneratorType = (TypeMirror) idGenerator;
-				if ( ! Util.hasDefaultConstructor(idGeneratorType) ){
+				if (!Util.hasDefaultConstructor(idGeneratorType)) {
 					String clazzName = Util.rawTypeToString(tm, '.');
 					error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
 							+ ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR, element);
 					return;
 				}
 			} else {
-				error("[Bsonee Internal Error] Unknown class for idGenerator: "+idGenerator.getClass(), element);
+				error("[Bsonee Internal Error] Unknown class for idGenerator: "
+						+ idGenerator.getClass(), element);
 				return;
 			}
-			AnnotationInfo annotationInfo = new AnnotationInfo(tm, (String)annotation.get("id"), (Boolean)annotation.get("keepIdProperty"), idGeneratorType, customGenerator);
-			if ( annotationInfo.hasCustomId() && annotationInfo.hasCustomGenerator() ){
+			AnnotationInfo annotationInfo = new AnnotationInfo(tm,
+					(String) annotation.get("id"),
+					(Boolean) annotation.get("keepIdProperty"),
+					idGeneratorType, customGenerator);
+
+			if (annotationInfo.hasCustomId() && annotationInfo.hasCustomGenerator()) {
 				String clazzName = Util.rawTypeToString(tm, '.');
 				error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
 						+ CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME, element);
@@ -185,13 +195,18 @@ public class BsonProcessor extends AbstractProcessor {
 	}
 
 	private boolean addTypeAndSuperTypes(Set<AnnotationInfo> toGenerate, AnnotationInfo annotationInfo) {
-		if ( Util.getSuperType(annotationInfo.getType(), processingEnv) != null ){
-			List<? extends TypeMirror> directSupertypes = processingEnv.getTypeUtils().directSupertypes(annotationInfo.getType());
-			for (TypeMirror superType:directSupertypes){
+		if (Util.getSuperType(annotationInfo.getType(), processingEnv) != null) {
+			List<? extends TypeMirror> directSupertypes = processingEnv.getTypeUtils()
+					.directSupertypes(annotationInfo.getType());
+
+			for (TypeMirror superType : directSupertypes) {
 				DeclaredType dtReplaced = (DeclaredType) superType;
 				TypeMirror erasured = processingEnv.getTypeUtils().erasure(superType);
-				DeclaredType dtRaw = (DeclaredType) processingEnv.getElementUtils().getTypeElement(erasured.toString()).asType();
-				annotationInfo.addSuperTypeInfo(erasured, dtRaw.getTypeArguments(), dtReplaced.getTypeArguments());
+				DeclaredType dtRaw = (DeclaredType) processingEnv.getElementUtils().
+						getTypeElement(erasured.toString()).asType();
+
+				annotationInfo.addSuperTypeInfo(erasured, dtRaw.getTypeArguments(),
+						dtReplaced.getTypeArguments());
 			}
 		}
 
@@ -232,7 +247,7 @@ public class BsonProcessor extends AbstractProcessor {
 		note("Generating Codec Registry");
 		return new BsoneeCodecRegistryGenerator(generated, processingEnv).getJavaFile();
 	}
-	
+
 	private JavaFile createBsoneeClass() {
 		note("Generating BsoneeBson");
 		return new BsoneeBsonGenerator(generated, processingEnv).getJavaFile();
@@ -255,13 +270,13 @@ public class BsonProcessor extends AbstractProcessor {
 		processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, msg,
 				element);
 	}
-	
+
 	private void note(String msg, Element element) {
 		processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, msg, element);
 	}
-	
+
 	private void note(String msg) {
-		note(msg,null);
+		note(msg, null);
 	}
 
 }

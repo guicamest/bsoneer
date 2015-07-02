@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	
+
 	protected final CodecRegistry registry;
 	protected final IdGenerator idGenerator;
 
@@ -93,9 +93,9 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 		encodeVariables(writer, value, encoderContext);
 		writer.writeEndDocument();
 	}
-	
-	protected void encodeVariables(BsonWriter writer, T value, EncoderContext encoderContext){};
-	
+
+	protected void encodeVariables(BsonWriter writer, T value, EncoderContext encoderContext) {};
+
 	/**
 	 * To be used if and only if it belongs to {@link java.util} package
 	 * @param writer
@@ -106,18 +106,18 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 	protected void encode(BsonWriter writer, Collection<?> coll, EncoderContext encoderContext) {
 		writer.writeStartArray();
 		Iterator<?> iterator = coll.iterator();
-		while(iterator.hasNext()){
+		while(iterator.hasNext()) {
 			Object next = iterator.next();
-			if ( next == null ){
+			if (next == null) {
 				writer.writeNull();
-			}else{
+			} else {
 				Codec codec = registry.get(next.getClass());
 				encoderContext.encodeWithChildContext(codec, writer, next);
 			}
 		}
 		writer.writeEndArray();
 	}
-	
+
 	/**
 	 * To be used if and only if it is an array []
 	 * @param writer
@@ -128,16 +128,16 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 	protected void encode(BsonWriter writer, Object[] coll, EncoderContext encoderContext) {
 		writer.writeStartArray();
 		for (Object next : coll) {
-			if ( next == null ){
+			if (next == null) {
 				writer.writeNull();
-			}else{
+			} else {
 				Codec codec = registry.get(next.getClass());
 				encoderContext.encodeWithChildContext(codec, writer, next);
 			}
 		}
 		writer.writeEndArray();
 	}
-	
+
 	protected void encode(BsonWriter writer, boolean[] coll, EncoderContext encoderContext) {
 		writer.writeStartArray();
 		for (boolean next : coll) {
@@ -145,7 +145,7 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 		}
 		writer.writeEndArray();
 	}
-	
+
 	protected void encode(BsonWriter writer, int[] coll, EncoderContext encoderContext) {
 		writer.writeStartArray();
 		for (int next : coll) {
@@ -153,7 +153,7 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 		}
 		writer.writeEndArray();
 	}
-	
+
 	protected void encode(BsonWriter writer, long[] coll, EncoderContext encoderContext) {
 		writer.writeStartArray();
 		for (long next : coll) {
@@ -161,7 +161,7 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 		}
 		writer.writeEndArray();
 	}
-	
+
 	protected void encode(BsonWriter writer, double[] coll, EncoderContext encoderContext) {
 		writer.writeStartArray();
 		for (double next : coll) {
@@ -192,7 +192,7 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 				if (bsonType == BsonType.OBJECT_ID) {
 					reader.readObjectId();
 				} else {
-					logger.error("No setter for " + fieldName+ " and cannot handle bsonType "+bsonType);
+					logger.error("No setter for " + fieldName + " and cannot handle bsonType " + bsonType);
 				}
 			}
 		}

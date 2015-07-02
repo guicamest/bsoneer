@@ -53,50 +53,50 @@ final public class BsonGeneratorTest {
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee", "class Person {", "  Person(long u){}",
+						"@Bsonee", "class Person {", "  Person(long u) {}",
 						"  int a;", "}"));
 		ASSERT.about(javaSource()).that(sourceFile)
 				.processedWith(bsoneerProcessors()).failsToCompile()
 				.withErrorContaining(BsonProcessor.NO_DEFAULT_CONSTRUCTOR);
 	}
-	
+
 	@Test
 	public void errorBsonnePrivateDefaultConstructor() {
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee", "class Person {", "  private Person(){}",
+						"@Bsonee", "class Person {", "  private Person() {}",
 						"  int a;", "}"));
 		ASSERT.about(javaSource()).that(sourceFile)
 				.processedWith(bsoneerProcessors()).failsToCompile()
 				.withErrorContaining(BsonProcessor.NO_DEFAULT_CONSTRUCTOR);
 	}
-	
+
 	@Test
 	public void testBsoneesGeneration() throws IOException {
 		JavaFileObject dogSourceFile = JavaFileObjects.forSourceString(
 				"Dog",
-				Joiner.on("\n").join("class Dog {", "  protected Dog(){}",
+				Joiner.on("\n").join("class Dog {", "  protected Dog() {}",
 						"  int a;", "}"));
-		
+
 		JavaFileObject personSourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
 						"import com.sleepcamel.bsoneer.Bsonees;",
-						"@Bsonees({@Bsonee(Person.class), @Bsonee(Dog.class)})", "class Person {", "  protected Person(){}",
+						"@Bsonees({@Bsonee(Person.class), @Bsonee(Dog.class)})", "class Person {", "  protected Person() {}",
 						"  int a;", "}"));
 		ASSERT.about(javaSources()).that(Arrays.asList(personSourceFile, dogSourceFile))
 				.processedWith(bsoneerProcessors()).compilesWithoutError().and()
 				.generatesSources(ProcessorTestUtils.codecFor("Person"), ProcessorTestUtils.codecFor("Dog"));
 	}
-	
+
 	@Test
 	public void testBsoneesGenerationFail_noValueInsideBsonee() {
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
 						"import com.sleepcamel.bsoneer.Bsonees;",
-						"@Bsonees({@Bsonee()})", "class Person {", "  protected Person(){}",
+						"@Bsonees({@Bsonee()})", "class Person {", "  protected Person() {}",
 						"  int a;", "}"));
 		ASSERT.about(javaSource()).that(sourceFile)
 				.processedWith(bsoneerProcessors()).failsToCompile()
@@ -108,8 +108,8 @@ final public class BsonGeneratorTest {
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee", "class Person {", "  protected Person(){}",
-						"  public Person(int e){}", "  int a;", "}"));
+						"@Bsonee", "class Person {", "  protected Person() {}",
+						"  public Person(int e) {}", "  int a;", "}"));
 		ASSERT.about(javaSource()).that(sourceFile)
 				.processedWith(bsoneerProcessors()).compilesWithoutError();
 
@@ -117,7 +117,7 @@ final public class BsonGeneratorTest {
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
 						"@Bsonee", "class Person {",
-						"  public Person(int e){}", "  protected Person(){}",
+						"  public Person(int e) {}", "  protected Person() {}",
 						"  int a;", "}"));
 		ASSERT.about(javaSource()).that(sourceFile)
 				.processedWith(bsoneerProcessors()).compilesWithoutError();
@@ -128,14 +128,14 @@ final public class BsonGeneratorTest {
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee", "class Person {", "  protected Person(){}",
-						"  public Person(int e){}", "  int a;", "}"));
+						"@Bsonee", "class Person {", "  protected Person() {}",
+						"  public Person(int e) {}", "  int a;", "}"));
 		JavaFileObject sourceFileWithAnnotation = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee(Person.class)", "class Person {", "  protected Person(){}",
-						"  public Person(int e){}", "  int a;", "}"));
-		
+						"@Bsonee(Person.class)", "class Person {", "  protected Person() {}",
+						"  public Person(int e) {}", "  int a;", "}"));
+
 		ASSERT.about(javaSource()).that(sourceFile)
 				.processedWith(bsoneerProcessors()).compilesWithoutError();
 		ASSERT.about(javaSource()).that(sourceFileWithAnnotation)
@@ -149,20 +149,20 @@ final public class BsonGeneratorTest {
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
 						"import org.bson.codecs.IdGenerator;",
 						"class CustomIdGenerator implements IdGenerator {",
-						"  public CustomIdGenerator(){}",
-						"public Object generate(){return null;}",
+						"  public CustomIdGenerator() {}",
+						"public Object generate() {return null;}",
 						"}"));
-		
+
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee(id=\"a\", idGenerator=CustomIdGenerator.class)", "class Person {", "  protected Person(){}",
+						"@Bsonee(id=\"a\", idGenerator=CustomIdGenerator.class)", "class Person {", "  protected Person() {}",
 						"  int a;", "}"));
 		ASSERT.about(javaSources()).that(Arrays.asList(idGeneratorFile, sourceFile))
 				.processedWith(bsoneerProcessors()).failsToCompile()
 				.withErrorContaining(BsonProcessor.CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME);
 	}
-	
+
 	@Test
 	public void cannotUseIdGeneratorWithoutPublicDefaultConstructor_fail() {
 		JavaFileObject idGeneratorFile = JavaFileObjects.forSourceString(
@@ -170,27 +170,27 @@ final public class BsonGeneratorTest {
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
 						"import org.bson.codecs.IdGenerator;",
 						"class CustomIdGenerator implements IdGenerator {",
-						"  public CustomIdGenerator(String a){}",
-						"  protected CustomIdGenerator(){}",
-						"public Object generate(){return null;}",
+						"  public CustomIdGenerator(String a) {}",
+						"  protected CustomIdGenerator() {}",
+						"public Object generate() {return null;}",
 						"}"));
-		
+
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee(idGenerator=CustomIdGenerator.class)", "class Person {", "  protected Person(){}",
+						"@Bsonee(idGenerator=CustomIdGenerator.class)", "class Person {", "  protected Person() {}",
 						"  int a;", "}"));
 		ASSERT.about(javaSources()).that(Arrays.asList(idGeneratorFile, sourceFile))
 				.processedWith(bsoneerProcessors()).failsToCompile()
 				.withErrorContaining(BsonProcessor.ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR);
 	}
-	
+
 	@Test
 	public void idPropertyNotFound_fail() {
 		JavaFileObject sourceFile = JavaFileObjects.forSourceString(
 				"Person",
 				Joiner.on("\n").join("import com.sleepcamel.bsoneer.Bsonee;",
-						"@Bsonee(id=\"b\")", "class Person {", "  protected Person(){}",
+						"@Bsonee(id=\"b\")", "class Person {", "  protected Person() {}",
 						"  int a;", "}"));
 		ASSERT.about(javaSource()).that(sourceFile)
 				.processedWith(bsoneerProcessors()).failsToCompile()

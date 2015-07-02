@@ -15,8 +15,8 @@ public class TypeMapping {
 	}
 
 	public TypeMirror getReplacement(TypeMirror rawType) {
-		for(int i=0; i < rawTypes.size(); i++){
-			if( rawTypes.get(i).equals(rawType) ){
+		for (int i = 0; i < rawTypes.size(); i++) {
+			if (rawTypes.get(i).equals(rawType)) {
 				return declaredTypes.get(i);
 			}
 		}

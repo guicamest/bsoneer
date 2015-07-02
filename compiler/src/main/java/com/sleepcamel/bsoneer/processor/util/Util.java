@@ -109,9 +109,9 @@ public class Util {
 		}
 		return null; // Annotation not found.
 	}
-	
-	private static Map<String, Object> parseAnnotationMirror(Class<?> annClass, AnnotationMirror annotation){
-		if ( annClass == null ){
+
+	private static Map<String, Object> parseAnnotationMirror(Class<?> annClass, AnnotationMirror annotation) {
+		if (annClass == null) {
 			// Do our best...
 			try {
 				annClass = Class.forName(annotation.getAnnotationType().toString());
@@ -154,7 +154,7 @@ public class Util {
 				}
 				return s;
 			}
-			
+
 			public Object visitAnnotation(AnnotationMirror a, Void p) {
 				return parseAnnotationMirror(null, a);
 			};
@@ -262,7 +262,7 @@ public class Util {
 		Elements utils = processingEnv.getElementUtils();
 		return getSuperType(utils.getTypeElement(Util.rawTypeToString(type, '.')), processingEnv);
 	}
-	
+
 	public static ParameterSpec bsonReaderParameter() {
 		return ParameterSpec.builder(bsonReaderTypeName(), "reader").build();
 	}
@@ -314,15 +314,15 @@ public class Util {
 	public static TypeName bsonCodecProviderTypeName() {
 		return ClassName.get("org.bson.codecs.configuration", "CodecProvider");
 	}
-	
+
 	public static TypeName bsonTypeName() {
 		return ClassName.get("org.bson.conversions", "Bson");
 	}
-	
+
 	public static TypeName bsonTypeTypeName() {
 		return ClassName.get("org.bson", "BsonType");
 	}
-	
+
 	public static AnnotationSpec suppressWarningsAnnotation() {
 		return suppressWarningsAnnotation(true, true);
 	}
@@ -341,13 +341,13 @@ public class Util {
 	}
 
 	public static boolean hasDefaultConstructor(TypeMirror idGeneratorType) {
-		if( idGeneratorType.getKind() != TypeKind.DECLARED ){
+		if (idGeneratorType.getKind() != TypeKind.DECLARED) {
 			return false;
 		}
-		
+
 		DeclaredType dt = (DeclaredType) idGeneratorType;
 		Element asElement = dt.asElement();
-		
+
 		List<ExecutableElement> constructorsIn = ElementFilter.constructorsIn(asElement.getEnclosedElements());
 		boolean hasDefaultConstructor = constructorsIn.isEmpty();
 		SimpleElementVisitor6<Boolean, Void> noArgsConstructorVisitor = new SimpleElementVisitor6<Boolean, Void>() {
@@ -364,7 +364,7 @@ public class Util {
 	public static List<? extends TypeMirror> getSuperTypes(TypeElement type,
 			ProcessingEnvironment processingEnv) {
 		List<? extends TypeMirror> directSupertypes = processingEnv.getTypeUtils().directSupertypes(type.asType());
-		if ( directSupertypes.size() == 1 && directSupertypes.get(0).toString().equals(Object.class.getCanonicalName())){
+		if (directSupertypes.size() == 1 && directSupertypes.get(0).toString().equals(Object.class.getCanonicalName())) {
 			return Collections.emptyList();
 		}
 		return directSupertypes;

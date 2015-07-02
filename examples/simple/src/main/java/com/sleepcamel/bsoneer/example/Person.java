@@ -32,8 +32,8 @@ public class Person {
 	double[] doubles;
 	double[][][] doublesss;
 
-	protected Person(){}
-	
+	protected Person() {}
+
 	public Person(String name, String lastName, Date date, GrowthStatus growth) {
 		this.name = name;
 		this.lastName = lastName;
@@ -56,17 +56,17 @@ public class Person {
 	public GrowthStatus getGrowth() {
 		return growth;
 	}
-	
+
 	public void getBla() {
 	}
-	
+
 	private void getSmth() {
 	}
-	
+
 	public String setCo() {
 		return "";
 	}
-	
+
 	public String setCow(String o) {
 		return o;
 	}

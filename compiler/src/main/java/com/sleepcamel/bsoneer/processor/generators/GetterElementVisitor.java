@@ -23,7 +23,7 @@ class GetterElementVisitor extends BaseVisitor {
 			for (VarInfo vi : visitedVars.get(tkey)) {
 				TypeMirror key = getReplaceTypeIfTypeVar(vi);
 				String writeMethod = passThroughMappings.get(key.toString());
-				
+
 				String accessName = vi.getMethod();
 				accessName += vi.isMethod() ? "()" : "";
 				boolean isPrimitive = key.getKind().isPrimitive();
@@ -32,20 +32,20 @@ class GetterElementVisitor extends BaseVisitor {
 					writeMethod = "String";
 					accessName += ".name()";
 				}
-				
-				for(String bsonName:vi.getBsonNames()){
+
+				for (String bsonName : vi.getBsonNames()) {
 					com.squareup.javapoet.CodeBlock.Builder codeBuilder = CodeBlock.builder();
 					codeBuilder.addStatement("writer.writeName(\"$L\")", bsonName);
-					
+
 					if (writeMethod != null) {
 						codeBuilder.addStatement("writer.write$L(value.$L)", writeMethod, accessName);
 					} else if (isJavaArray || isJavaCollection(key)) {
 						// IF $L is a java.util.Collection or superclass(iface) inside java.lang or an array, call
 						// protected void encode(BsonWriter writer, Collection<?> coll, EncoderContext encoderContext) {
 //							encode(BsonWriter writer, Object[] coll, EncoderContext encoderContext)
-						if ( isJavaArray ){
+						if (isJavaArray) {
 							codeBuilder.addStatement("encode(writer, value.$L, encoderContext)", accessName);
-						}else{
+						} else {
 							codeBuilder.addStatement("encode(writer, ($T)value.$L, encoderContext)", TypeName.get(Collection.class), accessName);
 						}
 					} else {
@@ -58,14 +58,14 @@ class GetterElementVisitor extends BaseVisitor {
 							throw new RuntimeException("No write method for " + key.toString());
 						}
 					}
-					
+
 					CodeBlock codeBlock = codeBuilder.build();
-					if ( "_id".equals(bsonName) ){
+					if ("_id".equals(bsonName)) {
 						codeBlock = writeAsId(codeBlock, false);
 					}
-					if ( isPrimitive ){
+					if (isPrimitive) {
 						p.addCode(codeBlock);
-					}else{
+					} else {
 						writeCheckingForNull(p, accessName, codeBlock);
 					}
 				}
@@ -73,8 +73,8 @@ class GetterElementVisitor extends BaseVisitor {
 		}
 	}
 
-	public CodeBlock writeAsId(CodeBlock cb, boolean includeName){
-		com.squareup.javapoet.CodeBlock.Builder builder = CodeBlock.builder(); 
+	public CodeBlock writeAsId(CodeBlock cb, boolean includeName) {
+		com.squareup.javapoet.CodeBlock.Builder builder = CodeBlock.builder();
 		builder.beginControlFlow("if (encoderContext.isEncodingCollectibleDocument())");
 		if (includeName) {
 			builder.addStatement("writer.writeName(\"_id\")");
@@ -83,9 +83,9 @@ class GetterElementVisitor extends BaseVisitor {
 		builder.endControlFlow();
 		return builder.build();
 	}
-	
-	public void writeCheckingForNull(Builder p, String tn, CodeBlock cb){
-		p.beginControlFlow("if ( value.$L != null )", tn);
+
+	public void writeCheckingForNull(Builder p, String tn, CodeBlock cb) {
+		p.beginControlFlow("if (value.$L != null)", tn);
 		p.addCode(cb);
 		p.endControlFlow();
 	}
