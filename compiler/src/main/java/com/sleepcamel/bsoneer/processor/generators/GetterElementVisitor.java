@@ -19,9 +19,11 @@ class GetterElementVisitor extends BaseVisitor {
 	}
 
 	public void writeBody(Builder p) {
-		for (TypeMirror key : visitedVars.keySet()) {
-			String writeMethod = passThroughMappings.get(key.toString());
-			for (VarInfo vi : visitedVars.get(key)) {
+		for (TypeMirror tkey : visitedVars.keySet()) {
+			for (VarInfo vi : visitedVars.get(tkey)) {
+				TypeMirror key = getReplaceTypeIfTypeVar(vi);
+				String writeMethod = passThroughMappings.get(key.toString());
+				
 				String accessName = vi.getMethod();
 				accessName += vi.isMethod() ? "()" : "";
 				boolean isPrimitive = key.getKind().isPrimitive();

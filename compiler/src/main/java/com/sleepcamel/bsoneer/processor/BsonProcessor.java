@@ -30,6 +30,7 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.SimpleElementVisitor6;
@@ -182,48 +183,28 @@ public class BsonProcessor extends AbstractProcessor {
 			}
 		}
 	}
-	
-	/*
-	 * Object[] values = (Object[]) annotation.get("value");
-			if (values.length != 0) {
-				for (Object o : values) {
-					TypeMirror tm = (TypeMirror) o;
-					Element asElement = processingEnv.getTypeUtils().asElement(tm);
-					if (!asElement.getKind().equals(ElementKind.CLASS)) {
-						error(CANNOT_GENERATE_CODE_FOR + "'"
-								+ tm.toString() + "'. " + IT_IS_NOT_A_CLASS
-								, element);
-						continue;
-					}
-					if (!addTypeAndSuperTypes(toGenerate, tm)) {
-						error(CANNOT_GENERATE_CODE_FOR + "'" + tm.toString() + "'. "
-								+ NO_DEFAULT_CONSTRUCTOR, element);
-						continue;
-					}
-				}
-			} else {
-				String clazzName = Util.rawTypeToString(element.asType(), '.');
-				if (!element.getKind().equals(ElementKind.CLASS)) {
-					error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
-							+ IT_IS_NOT_A_CLASS, element);
-					continue;
-				}
-				if (!addTypeAndSuperTypes(toGenerate, element.asType())) {
-					error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
-							+ NO_DEFAULT_CONSTRUCTOR, element);
-					continue;
-				}
-			}
-	 */
 
 	private boolean addTypeAndSuperTypes(Set<AnnotationInfo> toGenerate, AnnotationInfo annotationInfo) {
-//		ClassName superType = Util.getSuperType(tm, processingEnv);
-//		if (superType != null) {
-//			Elements elementUtils = processingEnv.getElementUtils();
-//			TypeElement typeElement = elementUtils
-//					.getTypeElement(superType.toString());
-//			hasDefaultConstructor &= addTypeAndSuperTypes(toGenerate, typeElement.asType());
-//		}
+		if ( Util.getSuperType(annotationInfo.getType(), processingEnv) != null ){
+			List<? extends TypeMirror> directSupertypes = processingEnv.getTypeUtils().directSupertypes(annotationInfo.getType());
+			for (TypeMirror superType:directSupertypes){
+				DeclaredType dtReplaced = (DeclaredType) superType;
+				TypeMirror erasured = processingEnv.getTypeUtils().erasure(superType);
+				DeclaredType dtRaw = (DeclaredType) processingEnv.getElementUtils().getTypeElement(erasured.toString()).asType();
+				annotationInfo.addSuperTypeInfo(erasured, dtRaw.getTypeArguments(), dtReplaced.getTypeArguments());
+			}
+		}
+
+		/*
+		ClassName superType = Util.getSuperType(tm, processingEnv);
+		if (superType != null) {
+			Elements elementUtils = processingEnv.getElementUtils();
+			TypeElement typeElement = elementUtils
+					.getTypeElement(superType.toString());
+			hasDefaultConstructor &= addTypeAndSuperTypes(toGenerate, typeElement.asType());
+		}
+		*/
+
 		TypeMirror erasure = processingEnv.getTypeUtils().erasure(annotationInfo.getType());
 		TypeElement typeElement = processingEnv.getElementUtils().getTypeElement(erasure.toString());
 		List<ExecutableElement> constructorsIn = ElementFilter.constructorsIn(typeElement.getEnclosedElements());

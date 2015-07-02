@@ -22,7 +22,6 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
 public class BsoneeCodecProviderGenerator {
-	private ProcessingEnvironment processingEnv;
 	private Set<ClassName> generated = new HashSet<ClassName>();
 	private final String basePackage;
 
@@ -36,7 +35,6 @@ public class BsoneeCodecProviderGenerator {
 			this.generated.add(entityClassName);
 		}
 		this.basePackage = basePackage;
-		this.processingEnv = processingEnv;
 	}
 
 	public JavaFile getJavaFile() {

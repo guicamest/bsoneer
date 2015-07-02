@@ -2,7 +2,6 @@ package com.sleepcamel.bsoneer.processor.generators;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,12 +36,8 @@ import org.bson.BsonBinary;
 import org.bson.BsonDbPointer;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
-import org.bson.BsonType;
-import org.bson.codecs.BsonTypeClassMap;
 import org.bson.types.ObjectId;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
@@ -52,7 +47,6 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 	private String execPrefix;
 	private boolean canReturnVoid;
 	private int argQty;
-	protected BiMap<TypeMirror, BsonType> mappings = HashBiMap.create();
 	private Set<String> visits = new HashSet<String>();
 
 	protected Multimap<TypeMirror, VarInfo> visitedVars = MultimapBuilder.hashKeys().hashSetValues().build();
@@ -82,19 +76,9 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		this.canReturnVoid = canReturnVoid;
 		this.argQty = argQty;
 		this.ai = ai;
-		Map<BsonType, Class<?>> empty = Collections.emptyMap();
-		BsonTypeClassMap bsonTypeClassMap = new BsonTypeClassMap(empty);
 		elementUtils = processingEnv.getElementUtils();
 		typeUtils = processingEnv.getTypeUtils();
 		
-		for (BsonType type : BsonType.values()) {
-			Class<?> class1 = bsonTypeClassMap.get(type);
-			if (class1 != null) {
-				String cName = class1.getCanonicalName();
-				TypeElement typeElement = elementUtils.getTypeElement(cName);
-				mappings.put(typeElement.asType(), type);
-			}
-		}
 		addCollectionMapping(BlockingDeque.class, LinkedBlockingDeque.class);
 		addCollectionMapping(BlockingQueue.class, LinkedBlockingDeque.class);
 		addCollectionMapping(Deque.class, LinkedBlockingDeque.class);
@@ -128,7 +112,7 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 			return DEFAULT_VALUE;
 		}
 		String varName = e.getSimpleName().toString();
-		addVarInfo(varName, varName, e.asType(), boxPrimitives);
+		addVarInfo(e.getEnclosingElement().asType(), varName, varName, e.asType(), boxPrimitives);
 		return DEFAULT_VALUE;
 	}
 
@@ -144,7 +128,7 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		String methodName = e.getSimpleName().toString();
 		String varName = methodName.substring(3);
 		varName = varName.substring(0, 1).toLowerCase() + varName.substring(1);
-		addVarInfo(varName, methodName, tm, boxPrimitives);
+		addVarInfo(e.getEnclosingElement().asType(), varName, methodName, tm, boxPrimitives);
         return DEFAULT_VALUE;
     }
 	
@@ -152,7 +136,7 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		return ai.hasCustomId() && !foundCustomId;
 	}
 	
-	private void addVarInfo(String varName, String methodName, TypeMirror tm, boolean boxPrimitives){
+	private void addVarInfo(TypeMirror typeMirror, String varName, String methodName, TypeMirror tm, boolean boxPrimitives){
 		boolean accessViaProperty = varName.equals(methodName);
 		String bsonName = varName;
 		boolean customId = ai.hasCustomId() && ai.getIdProperty().equals(varName);
@@ -169,8 +153,21 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 			if (tm.getKind().isPrimitive() && boxPrimitives) {
 				tm = typeUtils.boxedClass((PrimitiveType) tm).asType();
 			}
-			visitedVars.put(tm, new VarInfo(varName, methodName, tm, accessViaProperty, bsonName, otherBsonNames));
+			visitedVars.put(tm, new VarInfo(typeUtils.erasure(typeMirror), varName, methodName, tm, accessViaProperty, bsonName, otherBsonNames));
 		}
+	}
+	
+	protected TypeMirror getReplaceTypeIfTypeVar(VarInfo vi) {
+		switch (vi.getTypeMirror().getKind()) {
+		case TYPEVAR:
+			TypeMirror replacedTypeFor = ai.getReplacedTypeFor(vi.getVarSource(), vi.getTypeMirror());
+			if ( replacedTypeFor != null ){
+				return replacedTypeFor;
+			}
+		default:
+			break;
+		}
+		return vi.getTypeMirror();
 	}
 	
 	protected boolean isJavaCollection(TypeMirror key) {
@@ -201,20 +198,31 @@ abstract class BaseVisitor extends SimpleElementVisitor6<Void, Boolean> {
 		return typeUtils.getArrayType(boxed);
 	}
 	
-	protected TypeMirror typeArg(TypeMirror tm){
-		return ((DeclaredType) tm).getTypeArguments().get(0);
+	protected TypeMirror collectionTypeArgument(VarInfo vi, TypeMirror tm){
+		TypeMirror typeMirror = ((DeclaredType) tm).getTypeArguments().get(0);
+		TypeMirror replacedTypeFor = ai.getReplacedTypeFor(vi.getVarSource(), typeMirror);
+		if ( replacedTypeFor == null ) {
+			replacedTypeFor = typeMirror;
+		}
+		return replacedTypeFor;
 	}
 	
-	protected TypeMirror getJavaCollectionImplementationClass(TypeMirror typeMirror) {
+	protected TypeMirror getJavaCollectionClass(VarInfo vi, TypeMirror typeMirror, boolean replaceInterfaceForImplementation, boolean collectionTypeArgumentIsVar) {
 		if ( !isJavaCollection(typeMirror) ){
 			throw new RuntimeException("Type "+typeMirror+" is not a java collection");
 		}
 		DeclaredType declared = (DeclaredType) typeMirror;
-		if ( ElementKind.INTERFACE.equals(declared.asElement().getKind()) ){
-			TypeMirror dt = declared.getTypeArguments().get(0);
-			TypeElement typeElem = collectionMappings.get(typeUtils.erasure(typeMirror));
-			return typeUtils.getDeclaredType(typeElem, dt);
+		TypeMirror dt = collectionTypeArgument(vi, declared);
+		TypeMirror erasured = typeUtils.erasure(typeMirror);
+		TypeElement typeElem = null;
+		if (ElementKind.INTERFACE.equals(declared.asElement().getKind()) && replaceInterfaceForImplementation) {
+			typeElem = collectionMappings.get(erasured);
+		}else{
+			typeElem = elementUtils.getTypeElement(erasured.toString());
 		}
-		return typeMirror;
+		if ( collectionTypeArgumentIsVar ){
+			return typeUtils.erasure(typeElem.asType());
+		}
+		return typeUtils.getDeclaredType(typeElem, dt);
 	}
 }

@@ -13,8 +13,10 @@ class VarInfo {
 	final private TypeMirror typeMirror;
 	final private boolean accessViaProperty;
 	private List<String> bsonNames;
+	final private TypeMirror varSource;
 
-	public VarInfo(String name, String methodName, TypeMirror typeMirror, boolean accessViaProperty, String bsonName, String ... otherBsonNames) {
+	public VarInfo(TypeMirror varSource, String name, String methodName, TypeMirror typeMirror, boolean accessViaProperty, String bsonName, String ... otherBsonNames) {
+		this.varSource = varSource;
 		this.name = name;
 		this.method = methodName;
 		this.typeMirror = typeMirror;
@@ -54,6 +56,10 @@ class VarInfo {
 	
 	public List<String> getBsonNames() {
 		return bsonNames;
+	}
+
+	public TypeMirror getVarSource() {
+		return varSource;
 	}
 
 	@Override

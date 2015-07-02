@@ -17,7 +17,7 @@ package com.sleepcamel.bsoneer.processor.util;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -359,6 +359,15 @@ public class Util {
 			hasDefaultConstructor |= (noArgsConstructorVisitor.visit(constructor));
 		}
 		return hasDefaultConstructor;
+	}
+
+	public static List<? extends TypeMirror> getSuperTypes(TypeElement type,
+			ProcessingEnvironment processingEnv) {
+		List<? extends TypeMirror> directSupertypes = processingEnv.getTypeUtils().directSupertypes(type.asType());
+		if ( directSupertypes.size() == 1 && directSupertypes.get(0).toString().equals(Object.class.getCanonicalName())){
+			return Collections.emptyList();
+		}
+		return directSupertypes;
 	}
 
 }

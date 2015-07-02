@@ -47,7 +47,7 @@ class SetterElementVisitor extends BaseVisitor {
 	private TypeSpec.Builder createSetterClass(ClassName entityClassName, TypeName setterIface, String setterClassName, VarInfo vi) {
 		TypeSpec.Builder setterBuilder = TypeSpec.classBuilder(setterClassName);
 		
-		TypeMirror key = vi.getTypeMirror();
+		TypeMirror key = getReplaceTypeIfTypeVar(vi);
 		String readMethod = passThroughMappings.get(key.toString());
 		
 		Builder setterMethod = MethodSpec.methodBuilder("set")
@@ -59,7 +59,7 @@ class SetterElementVisitor extends BaseVisitor {
 		if (Util.isEnum(key)) {
 			addSetterCode(setterMethod, "String", vi, "$T.valueOf", ClassName.get(key));
 		} else if (isJavaCollection(key)) {
-			addSetterCodeForCollection(setterMethod, vi, getJavaCollectionImplementationClass(key));
+			addSetterCodeForCollection(setterMethod, vi);
 //		} else if (key.getKind() == TypeKind.ARRAY) { 
 			// TODO Implement array deserialization
 //			addSetterCodeForCollection(setterMethod, vi, k);
@@ -75,7 +75,7 @@ class SetterElementVisitor extends BaseVisitor {
 		String readerCall = "reader.read$L()";
 		if (readMethod == null) {
 			String cast = vi.getTypeMirror().getKind().equals(TypeKind.DECLARED)
-					? "(" + vi.getTypeMirror().toString() + ")" : "";
+							? "(" + vi.getTypeMirror().toString() + ")" : "";
 			readerCall = cast + "defaultReader.readValue$L(reader,decoderContext)";
 			readMethod = "";
 		}
@@ -92,7 +92,7 @@ class SetterElementVisitor extends BaseVisitor {
 		}
 	}
 
-	private void addSetterCodeForCollection(Builder setterMethod, VarInfo vi, TypeMirror collImplClass){
+	private void addSetterCodeForCollection(Builder setterMethod, VarInfo vi){
 		String getAccessName = vi.getMethod();
 		if ( vi.isMethod() ){
 			// TODO Support isSmth() getters
@@ -103,6 +103,13 @@ class SetterElementVisitor extends BaseVisitor {
 		String setAccessName = vi.getMethod();
 		setAccessName += vi.isMethod() ? "($L)" : " = $L";
 		
+		TypeMirror collectionTypeMirror = vi.getTypeMirror();
+		TypeMirror collectionTypeArgument = collectionTypeArgument(vi, collectionTypeMirror);
+		boolean collectionTypeArgumentIsVar = collectionTypeArgument.getKind() == TypeKind.TYPEVAR;
+		
+		TypeMirror javaImplementationCollectionClass = getJavaCollectionClass(vi, collectionTypeMirror, true, collectionTypeArgumentIsVar);
+		TypeMirror javaDeclarationCollectionClass = getJavaCollectionClass(vi, collectionTypeMirror, false, collectionTypeArgumentIsVar);
+		
 		setterMethod.addStatement("$T bsonType = reader.getCurrentBsonType()",  Util.bsonTypeTypeName());
 		setterMethod.beginControlFlow("if (bsonType == $T.NULL)", Util.bsonTypeTypeName());
 		setterMethod.addStatement("reader.readNull()");
@@ -110,17 +117,21 @@ class SetterElementVisitor extends BaseVisitor {
 		setterMethod.addStatement("return");
 		setterMethod.endControlFlow();
 		
-		setterMethod.addStatement("$T value = instance.$L", vi.getTypeMirror(), getAccessName);
+		setterMethod.addStatement("$T value = instance.$L", javaDeclarationCollectionClass, getAccessName);
 		
 		setterMethod.beginControlFlow("if (value == null)");
-		setterMethod.addStatement("value = new $T()", TypeName.get(collImplClass));
+		setterMethod.addStatement("value = new $T()", TypeName.get(javaImplementationCollectionClass));
 		setterMethod.addStatement("instance."+setAccessName,"value");
 		setterMethod.endControlFlow();
 		
 		setterMethod.addStatement("reader.readStartArray()");
 		
 		setterMethod.beginControlFlow("while (reader.readBsonType() != $T.END_OF_DOCUMENT)", Util.bsonTypeTypeName());
-		setterMethod.addStatement("value.add(($T)defaultReader.readValue(reader, decoderContext))", typeArg(vi.getTypeMirror()));
+		if ( !collectionTypeArgumentIsVar ){
+			setterMethod.addStatement("value.add(($T)defaultReader.readValue(reader, decoderContext))", collectionTypeArgument);
+		}else{
+			setterMethod.addStatement("value.add(defaultReader.readValue(reader, decoderContext))");
+		}
 		setterMethod.endControlFlow();
 		setterMethod.addStatement("reader.readEndArray()");
 	}
