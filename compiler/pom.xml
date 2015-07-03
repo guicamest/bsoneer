@@ -119,7 +119,7 @@
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
-          <excludePackageNames>com.sleepcamel.bsoneer.processor:com.sleepcamel.bsoneer.processor.*</excludePackageNames>
+          <excludePackageNames>com.sleepcamel.bsoneer.processor.generators:com.sleepcamel.bsoneer.processor.generators.*</excludePackageNames>
         </configuration>
       </plugin>
       <plugin>
