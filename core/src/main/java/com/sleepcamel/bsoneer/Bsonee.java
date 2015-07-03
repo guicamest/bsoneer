@@ -15,21 +15,20 @@
  */
 package com.sleepcamel.bsoneer;
 
-import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
-import org.bson.codecs.IdGenerator;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import org.bson.codecs.IdGenerator;
 import org.bson.codecs.ObjectIdGenerator;
 
 /**
  * Marks class or given classes to generate a specific {@link org.bson.codecs.CollectibleCodec}
  */
-@Target({ TYPE, METHOD })
+@Target({ TYPE })
 @Retention(CLASS)
 @Documented
 public @interface Bsonee {

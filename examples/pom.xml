@@ -30,10 +30,7 @@
 
   <modules>
     <module>simple</module>
-<!--
-    <module>android-simple</module>
-    <module>android-activity-graphs</module>
--->
+	<module>complex</module>
   </modules>
   <build>
     <pluginManagement>
