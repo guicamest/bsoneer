@@ -52,9 +52,9 @@ public class BsonProcessor extends AbstractProcessor {
 	public static final String IT_IS_NOT_A_CLASS = "It IS NOT a class";
 	public static final String CANNOT_GENERATE_CODE_FOR = "Cannot generate code for ";
 	public static final String NO_DEFAULT_CONSTRUCTOR = "Class does not have a default constructor or it is private";
-	public static final String CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME = "Cannot use idProperty and"
+	public static final String CANNOT_USE_ID_PROPERTY_AND_ID_GENERATOR_AT_THE_SAME_TIME = "Cannot use id property and"
 			+ " idGenerator at the same time";
-	public static final String ID_PROPERTY_NOT_FOUND = "IdProperty not found";
+	public static final String ID_PROPERTY_NOT_FOUND = "Id property not found";
 	public static final String ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR = "IdGenerator must have a default"
 			+ " public constructor";
 	public static final String BSONEE_INSIDE_BSONESS_CANNOT_BE_EMPTY = "@Bsonee inside @Bsoness must have a value";
@@ -108,9 +108,14 @@ public class BsonProcessor extends AbstractProcessor {
 				for (int i = 0; i < bsons.length; i++) {
 					Map<String, Object> bsonAnnotation = (Map<String, Object>) bsons[i];
 					if (bsonAnnotation.get("value") instanceof Class) {
-						String clazzName = Util.rawTypeToString(element.asType(), '.');
+						Element elementClass = element;
+						if ( element.getKind() == ElementKind.METHOD ){
+							elementClass = ((ExecutableElement)element).getEnclosingElement();
+						}
+						String clazzName = Util.rawTypeToString(elementClass.asType(), '.');
 						error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
-								+ BSONEE_INSIDE_BSONESS_CANNOT_BE_EMPTY, element);
+								+ BSONEE_INSIDE_BSONESS_CANNOT_BE_EMPTY, elementClass);
+						continue;
 					}
 					processBsoneeAnnotation(toGenerate, element, bsonAnnotation);
 				}
@@ -143,6 +148,7 @@ public class BsonProcessor extends AbstractProcessor {
 				String clazzName = Util.rawTypeToString(element.asType(), '.');
 				error(CANNOT_GENERATE_CODE_FOR + "'" + clazzName + "'. "
 						+ IT_IS_NOT_A_CLASS, element);
+				return;
 			} else {
 				tm = element.asType();
 			}
