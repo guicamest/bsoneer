@@ -28,9 +28,10 @@ class GetterElementVisitor extends BaseVisitor {
 				accessName += vi.isMethod() ? "()" : "";
 				boolean isPrimitive = key.getKind().isPrimitive();
 				boolean isJavaArray = key.getKind() == TypeKind.ARRAY;
+				String insideAccessName = accessName;
 				if (Util.isEnum(key)) {
 					writeMethod = "String";
-					accessName += ".name()";
+					insideAccessName += ".name()";
 				}
 
 				for (String bsonName : vi.getBsonNames()) {
@@ -38,19 +39,19 @@ class GetterElementVisitor extends BaseVisitor {
 					codeBuilder.addStatement("writer.writeName(\"$L\")", bsonName);
 
 					if (writeMethod != null) {
-						codeBuilder.addStatement("writer.write$L(value.$L)", writeMethod, accessName);
+						codeBuilder.addStatement("writer.write$L(value.$L)", writeMethod, insideAccessName);
 					} else if (isJavaArray || isJavaCollection(key)) {
 						// IF $L is a java.util.Collection or superclass(iface) inside java.lang or an array, call
 						// protected void encode(BsonWriter writer, Collection<?> coll, EncoderContext encoderContext) {
 //							encode(BsonWriter writer, Object[] coll, EncoderContext encoderContext)
 						if (isJavaArray) {
-							codeBuilder.addStatement("encode(writer, value.$L, encoderContext)", accessName);
+							codeBuilder.addStatement("encode(writer, value.$L, encoderContext)", insideAccessName);
 						} else {
-							codeBuilder.addStatement("encode(writer, ($T)value.$L, encoderContext)", TypeName.get(Collection.class), accessName);
+							codeBuilder.addStatement("encode(writer, ($T)value.$L, encoderContext)", TypeName.get(Collection.class), insideAccessName);
 						}
 					} else {
 						if (!isPrimitive) {
-							codeBuilder.addStatement("Object v = value.$L", accessName);
+							codeBuilder.addStatement("Object v = value.$L", insideAccessName);
 							codeBuilder.addStatement("$T c = registry.get(v.getClass())",
 								Util.bsonCodecTypeName());
 							codeBuilder.addStatement("encoderContext.encodeWithChildContext(c, writer, v)");
