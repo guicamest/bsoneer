@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Bsoneer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mongo 3.0 java library to generate codecs for existing beans">
+    <link href="static/bootstrap-combined.min.css" rel="stylesheet">
+    <link href="static/app.css" rel="stylesheet">
+    <link href="static/app-theme.css" rel="stylesheet">
+    <link href="http://fonts.googleapis.com/css?family=Roboto:400,300italic,100,100italic,300" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="static/html5shiv.min.js"></script><![endif]-->
+  </head>
+  <body data-target=".content-nav">
+    <header>
+      <div class="container">
+        <div class="row">
+          <div class="span5">
+            <h1>Bsoneer</h1>
+          </div>
+          <div class="span7">
+            <menu>
+              <ul>
+                <li><a href="#download" class="menu download">Download <span class="version-tag">Latest</span></a></li>
+                <li><a href="http://github.com/guicamest/bsoneer" data-title="View GitHub Project" class="menu github"><img src="static/icon-github.png" alt="GitHub"/></a></li>
+              </ul>
+            </menu>
+          </div>
+      </div>
+    </header>
+    <section id="subtitle">
+      <div class="container">
+        <div class="row">
+          <div class="span12">
+            <h2><strong>Mongo 3.0 java library</strong> to <strong>generate codecs</strong> for existing beans</h2>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="body">
+      <div class="container">
+        <div class="row">
+          <div class="span9">
+            <h3 id="introduction">Introduction</h3>
+
+            <p>The <strong>new</strong> <a href="http://mongodb.github.io/mongo-java-driver/">MongoDB Java Driver</a> brings the new <code>org.bson.Bson</code>, <code>org.bson.codecs.Codec</code> and <code>org.bson.codecs.CollectibleCodec</code> interfaces. There are <a href="http://docs.mongodb.org/ecosystem/drivers/java/#third-party-frameworks-and-libraries">several</a> frameworks and libraries for <strong>runtime</strong> POJO mapping, <strong>but</strong>, isn't it better to make use of the new interfaces and <a href="http://docs.oracle.com/javase/6/docs/api/javax/annotation/processing/package-summary.html">annotation-processing</a> to generate specific mapping codecs at <strong>compile-time</strong> and reduce POJO mapping on runtime?
+
+            <p>That's were Bsoneer comes into play. Just by annotating your POJO with the <code>@Bsonee</code> annotation, a specific <code>CollectibleCodec</code> for that POJO is generated to help with its encoding/decoding to BSON.</p> In addition, a <code>CodecProvider</code> is generated to provide the generated <code>Codec</code>s, a registry helper <code>BsoneeCodecRegistry</code> to ease codec registration to Mongo and <code>BsoneeBson</code> to get a Bson from a POJO.
+
+            <h3 id="using">Using Bsoneer</h3>
+            <p>We'll demonstrate Bsoneer usage by building a people registry. For complete sample code that you can compile and run, see Bsoneer's <a href="https://github.com/guicamest/bsoneer/tree/master/examples/simple/src/main/java/com/sleepcamel/bsoneer/example">people registry example</a>.</p>
+
+            <h4>Declaring Our POJO</h4>
+			
+			<pre class="prettyprint">@Bsonee()
+public class Person {
+
+	String name;
+	private String lastName;
+	private Date date;
+	private GrowthStatus growth;
+
+	protected Person() {}
+
+	public Person(String name, String lastName, Date date, GrowthStatus growth) {
+		this.name = name;
+		this.lastName = lastName;
+		this.date = date;
+		this.growth = growth;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public String getLastName() {
+		return lastName;
+	}
+	
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
+	public Date getDate() {
+		return date;
+	}
+
+	public GrowthStatus getGrowth() {
+		return growth;
+	}
+
+	public void setDate(Date date) {
+		this.date = date;
+	}
+
+	public void setGrowth(GrowthStatus growth) {
+		this.growth = growth;
+	}
+	
+	@Override
+	public String toString() {
+		return name + " " + lastName;
+	}
+
+}
+</pre>
+
+            <h4>The All Together</h4>
+
+            <pre class="prettyprint">class PeopleRegistry {
+  public static void main(String[] args) {
+	// Initialize mongo client and database
+	...
+	// Register generated codecs to people collection database
+	MongoCollection<Person> collection = BsoneeCodecRegistry.to(database.getCollection("people", Person.class));
+	// Register Johnny!
+	collection.insertOne(new Person("John", "Doe", new Date(), GrowthStatus.ALIVE));
+	System.out.println("We have " + collection.count() + " person(s) registered");
+	collection.find().forEach(new Block<Person>() {
+		public void apply(Person t) {
+			System.out.println("Registered " + t);
+		}
+	});
+	...
+  }
+}</pre>
+
+            <p>Now that we registered the generated codecs, we run our people registry app. Fun :)</p>
+
+            <pre>$ java -cp ... com.sleepcamel.bsoneer.example.PeopleRegistry
+We have 1 person(s) registered
+Registered John Doe</pre>
+
+            <h4>Bsonee - Codec generation options</h4>
+
+			<p><code>Bsonee</code> has the following options:
+			<ul>
+				<li>value</li>
+				<li>id</li>
+				<li>keepIdProperty</li>
+				<li>idGenerator</li>
+			</ul>
+			</p>
+			<p>Let's use Foo to demonstrate how it is persisted using the different options:</p>
+			
+			<pre class="prettyprint">@Bsonee()
+public class Foo {
+  int a;
+  Foo(){}
+}</pre>
+
+			<p>is equivalent to:</p>
+			<pre class="prettyprint">@Bsonee(Foo.class)
+public class Foo {
+  int a;
+  Foo(){}
+}
+</pre>
+
+			<p>and it will be persisted as: <code>{_id:ObjectId(....),a:0}</code></p>
+			
+			<h5>Using id</h5>
+			<pre class="prettyprint">@Bsonee(id="a")
+public class Foo {
+  int a;
+  Foo(){}
+}
+</pre>
+
+			<p>will be persisted as: <code>{_id:0}</code></p>
+			
+			<h5>Using id and keepIdProperty</h5>
+			<pre class="prettyprint">@Bsonee(id="a", keepIdProperty=true)
+public class Foo {
+  int a;
+  Foo(){}
+}
+</pre>
+
+			<p>will be persisted as: <code>{_id:0,a:0}</code></p>
+			
+			<h5>Using idGenerator</h5>
+			<pre class="prettyprint">
+public class FooIdGenerator extends IdGenerator&lt;Foo> {
+  public Object generate(Foo instance){
+	return instance.name + " " +instance.lastName;
+  }
+}
+			
+@Bsonee(idGenerator=FooIdGenerator.class)
+public class Foo {
+  String name = "Some";
+  String lastName = "One";
+  Foo(){}
+}
+</pre>
+
+			<p>will be persisted as: <code>{_id:"Some One"}</code></p>
+			
+            <h4>Bsonee Codec Registry</h4>
+
+            <p><code>BsoneeCodecRegistry</code> provides several utility methods to register generated codecs to a <code>CodecRegistry</code></p>
+			<p>Register codecs to existing registry:</p>
+            <pre class="prettyprint">CodecRegistry oldRegistry = ...
+CodecRegistry newRegistry = BsoneeCodecRegistry.to(oldRegistry);</pre>
+
+			<p>Register codecs to options builder:</p>
+			<pre class="prettyprint">MongoClientOptions.Builder mongoBuilder = ...
+BsoneeCodecRegistry.to(mongoBuilder);</pre>
+
+			<p>Register codecs to a <code>MongoDatabase</code>:</p>
+			<pre class="prettyprint">MongoDatabase db = ...
+BsoneeCodecRegistry.to(db);</pre>
+
+			<p>Register codecs to a <code>MongoCollection</code>:</p>
+			<pre class="prettyprint">MongoCollection collection = ...
+BsoneeCodecRegistry.to(collection);</pre>
+
+			<p>Get a CodecRegistry with registered codecs:</p>
+			<pre class="prettyprint">CodecRegistry registryWithBsoneeCodecs = BsoneeCodecRegistry.registry();</pre>
+			
+			<h4>Bsonee Bson</h4>
+			
+			<p>Bsoneer also generates the helper class <code>BsoneeBson</code> to help the user get a <code>org.bson.conversions.Bson</code> based on a POJO instance. To use it, just do:
+
+            <pre class="prettyprint">Bson bsonValue = BsoneeBson.bson(person);</pre>
+
+			<h4>Bsoneer IdGenerator</h4>
+			
+			<p>Though <strong>MongoDB</strong> provides <code>org.bson.codecs.IdGenerator</code> interface, it's generate method does not use the pojo to be persisted. To help with that, <strong>Bsonner</strong> brings <code>com.sleepcamel.bsoneer.IdGenerator</code> class:
+			
+			<pre class="prettyprint">public abstract class IdGenerator<T> implements org.bson.codecs.IdGenerator {
+
+	private T instance;
+
+	public void setEntity(T instance) {
+		this.instance = instance;
+	}
+
+	public abstract Object generate(T instance);
+
+	public Object generate() {return generate(instance);}
+}</pre>
+
+			<p>This way the user can generate a POJO id based on it's current values</p>
+			
+            <h4>Bsoneer Compile-time Validation</h4>
+
+            <p>Bsoneer does some validations when generating codecs:
+			<h5>Lack of a default constructor</h5>
+			This POJOs have a private default constructor or lack of a default constructor:</p>
+
+            <pre class="prettyprint">@Bsonee()
+public class Foo {
+  private Foo(){}
+}
+
+@Bsonee()
+public class Bar {
+  Bar(String a){}
+}</pre>
+
+            <p>When compiling it, <code>javac</code> rejects those classes:</p>
+
+            <pre>[ERROR] COMPILATION ERROR :
+[ERROR] Foo.java: Cannot generate code for 'Foo'. Class does not have a default constructor or it is private
+[ERROR] Bar.java: Cannot generate code for 'Bar'. Class does not have a default constructor or it is private
+</pre>
+            <p>Fix the problem providing a non-private default constructor:</p>
+
+            <pre class="prettyprint">@Bsonee()
+public class Foo {
+  public Foo(){}
+}
+
+@Bsonee()
+public class Bar {
+  Bar(){}
+  Bar(String a){}
+}</pre>
+
+			<h5>Id and IdGenerator</h5>
+            <p>Bsonee declarations cannot have both an <code>id</code> property and an <code>idGenerator</code>. That would mean the <code>_id</code> is to have both the generated id from the idGenerator and the value obtained from the property marked as <code>id</code></p>
+
+            <pre class="prettyprint">@Bsonee(id="a", idGenerator=CustomGenerator.class)
+public class Foo {
+  int a;
+  public Foo(){}
+}</pre>
+
+            <p>This would result on the following output:</p>
+
+            <pre>[ERROR] COMPILATION ERROR :
+[ERROR] Foo.java: Cannot generate code for 'Foo'. Cannot use id property and idGenerator at the same time.
+</pre>
+            <p>To solve this, you should use either id or idGenerator, for example:</p>
+
+            <pre class="prettyprint">@Bsonee(id="a")
+public class Foo {
+  int a;
+  public Foo(){}
+}</pre>
+
+			<h5>Property to use as id not found</h5>
+            <p>Bsonee verifies that the property marked as <code>id</code> is found on the POJO. For example:</p>
+
+            <pre class="prettyprint">@Bsonee(id="b")
+public class Foo {
+  int a;
+  public Foo(){}
+}</pre>
+
+            <p>This would result on the following output:</p>
+			<pre>[ERROR] COMPILATION ERROR :
+[ERROR] Foo.java: Id property not found
+</pre>
+
+			<p>To solve this, you should use an existing property of the POJO:</p>
+
+            <pre class="prettyprint">@Bsonee(id="a")
+public class Foo {
+  int a;
+  public Foo(){}
+}</pre>
+
+			<h5>Id generator must have a default public constructor</h5>
+
+			<p>When using <code>@Bsonee(idGenerator=...)</code>, the provided <code>idGenerator</code> must have a <strong>public default</strong> constructor. This example:
+
+			<pre class="prettyprint">@Bsonee(idGenerator=FooIdGenerator.class)
+public class Foo {
+  int a;
+  public Foo(){}
+}			
+			
+public class FooIdGenerator extends IdGenerator<Foo> {
+
+	FooIdGenerator(){}
+	
+	@Override
+	public Object generate(Foo instance) {
+		return new ObjectId();
+	}
+
+}</pre>
+
+			<p>This would result on the following output:</p>
+			<pre>[ERROR] COMPILATION ERROR :
+[ERROR] Foo.java: IdGenerator must have a default public constructor
+</pre>
+
+			<h5><code>Bsonee</code> inside <code>Bsonees</code> without <code>value</code></h5>
+			
+			<p>When using <code>@Bsonees({@Bsonee(...)})</code>, declared <code>@Bsonee</code>'s must have a value(otherwise, bsoneer cannot know for which class it has to generate a codec for. This example:
+
+			<pre class="prettyprint">public class Foo {
+  int a;
+  public Foo(){}
+}
+
+public class Bar {
+  int a;
+  public Bar(){}
+}
+			
+public class App {
+
+	@Bsonees({@Bsonee(),@Bsonee(Bar.class)})
+	public static void main(String[] args) {}
+
+}</pre>
+
+			<p>This would result on the following output:</p>
+			<pre>[ERROR] COMPILATION ERROR :
+[ERROR] App.java: @Bsonee inside @Bsoness must have a value
+</pre>
+
+			<p>To solve this, make sure you provide the value inside <code>@Bsonee</code> when using <code>@Bsonees</code>:</p>
+			<pre class="prettyprint">public class App {
+
+	@Bsonees({@Bsonee(Foo.class),@Bsonee(Bar.class)})
+	public static void main(String[] args) {}
+
+}</pre>
+
+            <h3 id="download">Download</h3>
+            <p><a href="https://search.maven.org/remote_content?g=com.sleepcamel.bsoneer&a=bsoneer&v=LATEST" class="dl core-version-href">&darr; <span class="version-tag">Latest</span> JAR</a> <a href="https://search.maven.org/remote_content?g=com.sleepcamel.bsoneer&a=bsoneer-compiler&v=LATEST" class="dl compiler-version-href">&darr; <span class="version-tag">Latest</span> Compiler JAR</a></p>
+            <p>You will need to include the Bsoneer JAR in your application's runtime.  In order to activate code generation you will need to include the compiler JAR in your build at compile time.</p>
+            <p>The source code to the Bsoneer, its samples, and this website is <a href="http://github.com/guicamest/bsoneer">available on GitHub</a>.</p>
+
+            <h4>Maven</h4>
+            <pre class="prettyprint">&lt;dependency>
+  &lt;groupId>com.sleepcamel.bsoneer&lt;/groupId>
+  &lt;artifactId>bsoneer&lt;/artifactId>
+  &lt;version><span class="version pln"><em>(insert latest version)</em></span>&lt;/version>
+&lt;/dependency>
+&lt;dependency>
+  &lt;groupId>com.sleepcamel.bsoneer&lt;/groupId>
+  &lt;artifactId>bsoneer-compiler&lt;/artifactId>
+  &lt;version><span class="version pln"><em>(insert latest version)</em></span>&lt;/version>
+  &lt;optional>true&lt;/optional>
+&lt;/dependency></pre>
+
+            <h4>Gradle</h4>
+            <pre class="prettyprint"> compile 'com.sleepcamel.bsoneer:bsoneer:(insert latest version)'
+ compile 'com.sleepcamel.bsoneer:bsoneer-compiler:(insert latest version)'</pre>
+ 
+			<h3 id="ide">IDE Configuration</h4>
+            <p>Some IDEs require additional configuration in order to enable annotation processing.</p>
+			
+			<h4 id="ide-eclipse">Eclipse Configuration</h4>
+			<ol>
+			  <li>
+				<p>Right click on your project in the <em>Package Explorer</em>. Head to <em>Java Compiler &rarr; Annotation Processing</em> and check <em>"Enable project specific settings"</em>.<p>
+				<p>Ensure the other annotation processing settings are the same as shown below:</p>
+				<p><img src="static/ide-eclipse1.png"/></p>
+			  </li>
+			  <li>
+				<p>Expand the <em>Annotation Processing</em> section and select <em>Factory Path</em>. Check <em>"Enable project specific settings"</em> and then click <em>"Add JARs…"</em>. Navigate to the project's <code>libs/</code> folder and select the Butter Knife jar.</p>
+				<p><img src="static/ide-eclipse2.png"/></p>
+			  </li>
+			  <li>Click <em>"Ok"</em> to save the new settings. Eclipse will ask you to rebuild your project to which you should click <em>"Yes"</em></li>
+			  <li>Make sure that the <code>.apt_generated/</code> folder is in your project root. It should contain files like <code>YOUR_POJOBsoneeCodec.java</code>. If these files are not present trigger a clean build by selected <em>Project &rarr; Clean</em>. This folder and files should not be checked into revision control.
+			  <li>Lastly, under <em>"Java Compiler"</em>, make sure that the <em>Compiler compliance level</em> is set to Java version 1.6 at minimum.</li>
+			</ol>
+			
+			<h4 id="ide-idea">IntelliJ IDEA Configuration</h4>
+				If your project uses an external configuration (like a Maven <code>pom.xml</code>) then annotation processing should just work. If not, try this:
+				<p>Open IDEA's preference and navigate to <em>Compiler &rarr; Annotation Processors</em>. Check <em>"Enable annotation processing"</em>.<p>
+				<p><img src="static/ide-idea1.png"/></p>
+
+            <h3 id="contributing">Contributing</h3>
+            <p>If you would like to contribute code you can do so through GitHub by forking the repository and sending a pull request.</p>
+            <p>When submitting code, please make every effort to follow existing conventions and style in order to keep the code as readable as possible. Please also make sure your code compiles by running <code>mvn clean verify</code>.</p>
+
+            <h3 id="license">License</h3>
+            <pre>Copyright 2015 Sleepcamel
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</pre>
+          </div>
+          <div class="span3">
+            <div class="content-nav" data-spy="affix" data-offset-top="80">
+              <ul class="nav nav-tabs nav-stacked primary">
+                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#using">Using Bsoneer</a></li>
+                <li><a href="#download">Download</a></li>
+				<li><a href="#ide">IDE configuration</a></li>
+                <li><a href="#contributing">Contributing</a></li>
+                <li><a href="#license">License</a></li>
+              </ul>
+              <ul class="nav nav-pills nav-stacked secondary">
+                <li><a href="javadoc/index.html">Javadoc</a></li>
+                <li><a href="http://stackoverflow.com/questions/tagged/bsoneer?sort=active">StackOverflow</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+	<a href="https://github.com/guicamest/bsoneer"><img style="position: absolute; top: 0; right: 0; border: 0; z-index:100;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
+    <script src="static/jquery.smooth-scroll.min.js"></script>
+    <script src="static/jquery-maven-artifact.min.js"></script>
+    <script src="static/prettify.js"></script>
+    <script type="text/javascript">
+      $(function() {
+        // Syntax highlight code blocks.
+        prettyPrint();
+
+        // Spy on scroll position for real-time updating of current section.
+        $('body').scrollspy();
+
+        // Use smooth-scroll for internal links.
+        $('a').smoothScroll();
+
+        // Enable tooltips on the header nav image items.
+        $('.menu').tooltip({
+          placement: 'bottom',
+          trigger: 'hover',
+          container: 'body',
+          delay: {
+            show: 500,
+            hide: 0
+          }
+        });
+
+        // Look up the latest version of the library.
+        $.fn.artifactVersion('com.sleepcamel.bsoneer', 'bsoneer', function(version, url) {
+          $('.version').text(version);
+          $('.version-tag').text('v' + version);
+          $('.core-version-href').attr('href', url);
+        });
+        $.fn.artifactVersion('com.sleepcamel.bsoneer', 'bsoneer-compiler', function(version, url) {
+          $('.compiler-version-href').attr('href', url);
+        });
+      });
+
+	  /*
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-X']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+	  */
+    </script>
+  </body>
+</html>
