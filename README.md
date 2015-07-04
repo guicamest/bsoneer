@@ -1,4 +1,5 @@
 Bsoneer [![Build Status](https://travis-ci.org/guicamest/bsoneer.svg?branch=master)](https://travis-ci.org/guicamest/bsoneer/branches)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.sleepcamel.bsoneer/bsoneer/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.sleepcamel.bsoneer/bsoneer)
 ========
 
 Mongo 3.0 library to generate codecs for existing beans
@@ -14,12 +15,12 @@ dependency:
   <dependency>
     <groupId>com.sleepcamel.bsoneer</groupId>
     <artifactId>bsoneer</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
   </dependency>
   <dependency>
     <groupId>com.sleepcamel.bsoneer</groupId>
     <artifactId>bsoneer-compiler</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1</version>
     <optional>true</optional>
   </dependency>
 </dependencies>
