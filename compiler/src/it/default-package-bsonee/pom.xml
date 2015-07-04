@@ -22,7 +22,7 @@
   <groupId>com.example.bsoneer.tests</groupId>
   <artifactId>default-package-bsonee</artifactId>
   <version>HEAD-SNAPSHOT</version>
-  <name>Default Package Injected Type</name>
+  <name>Default Package Bsonee</name>
   <dependencies>
     <dependency>
       <groupId>@bsoneer.groupId@</groupId>

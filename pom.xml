@@ -139,29 +139,52 @@
 					<artifactId>maven-jar-plugin</artifactId>
 					<version>2.5</version>
 				</plugin>
-				<plugin>
-					<artifactId>maven-javadoc-plugin</artifactId>
-					<version>2.9.1</version>
-				</plugin>
-				<plugin>
-					<artifactId>maven-source-plugin</artifactId>
-					<version>2.2.1</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-
-		<plugins>
 			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>2.10</version>
 				<configuration>
-					<source>${java.version}</source>
-					<target>${java.version}</target>
-					<compilerArgument>-Xlint:all</compilerArgument>
-					<showWarnings>true</showWarnings>
-					<showDeprecation>true</showDeprecation>
+					<failsOnError>false</failsOnError>
+					<consoleOutput>false</consoleOutput>
+					<configLocation>checkstyle.xml</configLocation>
 				</configuration>
+				<executions>
+					<execution>
+						<phase>compile</phase>
+						<goals>
+							<goal>checkstyle</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
-
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+					<version>2.9.1</version>
+				<configuration>
+					<doctitle>Bsoneer ${project.version} API</doctitle>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+					<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
@@ -180,52 +203,23 @@
                     <goals>deploy</goals>
 				</configuration>
 			</plugin>
+			</plugins>
+		</pluginManagement>
 
+		<plugins>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar-no-fork</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
+				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<doctitle>Bsoneer ${project.version} API</doctitle>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<compilerArgument>-Xlint:all</compilerArgument>
+					<showWarnings>true</showWarnings>
+					<showDeprecation>true</showDeprecation>
 				</configuration>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 
-			<plugin>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>2.10</version>
-				<configuration>
-					<failsOnError>false</failsOnError>
-					<consoleOutput>false</consoleOutput>
-					<configLocation>checkstyle.xml</configLocation>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>compile</phase>
-						<goals>
-							<goal>checkstyle</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+
+
 			<plugin>
 				<groupId>org.sonatype.plugins</groupId>
 				<artifactId>nexus-staging-maven-plugin</artifactId>
@@ -260,6 +254,7 @@
 			<modules>
 				<module>core</module>
 				<module>compiler</module>
+				<module>examples</module>
 			</modules>
 			<build>
 				<plugins>
