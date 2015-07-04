@@ -20,7 +20,7 @@
 	<groupId>com.sleepcamel.bsoneer</groupId>
 	<artifactId>bsonner-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>0.0.1</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<name>Bsoneer (Parent)</name>
 	<description>Mongo 3.0 library to generate codecs for existing beans</description>
 	<url>https://github.com/guicamest/bsoneer</url>
@@ -65,7 +65,7 @@
 		<url>http://github.com/guicamest/bsoneer/</url>
 		<connection>scm:git:git@github.com:guicamest/bsoneer.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/guicamest/bsoneer.git</developerConnection>
-		<tag>bsonner-parent-0.0.1</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<issueManagement>

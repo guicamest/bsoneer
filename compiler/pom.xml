@@ -20,7 +20,7 @@
   <parent>
     <groupId>com.sleepcamel.bsoneer</groupId>
     <artifactId>bsonner-parent</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2-SNAPSHOT</version>
   </parent>
 
   <artifactId>bsoneer-compiler</artifactId>
