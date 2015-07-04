@@ -1,5 +1,4 @@
-Bsoneer [![Build Status](https://travis-ci.org/guicamest/bsoneer.svg?branch=master)](https://travis-ci.org/guicamest/bsoneer/branches)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.sleepcamel.bsoneer/bsoneer/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.sleepcamel.bsoneer/bsoneer)
+Bsoneer [![Build Status](https://travis-ci.org/guicamest/bsoneer.svg?branch=master)](https://travis-ci.org/guicamest/bsoneer/branches) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.sleepcamel.bsoneer/bsoneer/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.sleepcamel.bsoneer/bsoneer)
 ========
 
 Mongo 3.0 library to generate codecs for existing beans
