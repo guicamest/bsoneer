@@ -26,9 +26,9 @@
 
 	<artifactId>bsoneer</artifactId>
 	<name>Bsoneer</name>
+	<description>Mongo 3.0 library to generate codecs for existing beans</description>
 
 	<properties>
-		<java.version>1.6</java.version>
 		<org.slf4j.slf4j-api.version>1.7.7</org.slf4j.slf4j-api.version>
 	</properties>
 
@@ -87,6 +87,10 @@
 			<plugin>
 				<artifactId>maven-release-plugin</artifactId>
 			</plugin>
+			<plugin>
+				<artifactId>maven-source-plugin</artifactId>
+			</plugin>
 		</plugins>
 	</build>
+
 </project>

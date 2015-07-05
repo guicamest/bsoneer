@@ -26,9 +26,14 @@
 
 	<artifactId>bsoneer-compiler</artifactId>
 	<name>Bsoneer Compiler</name>
-	<description>
-    Tools to generate Mongo Codecs for classes annotated with Bsoneer.
-  </description>
+	<description>Tools to generate Mongo Codecs for classes annotated with Bsoneer.</description>
+
+	<properties>
+		<javapoet.version>1.2.0</javapoet.version>
+		<guava.version>18.0</guava.version>
+		<truth.version>0.13</truth.version>
+		<compile-testing.version>0.7</compile-testing.version>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -39,46 +44,42 @@
 		<dependency>
 			<groupId>com.squareup</groupId>
 			<artifactId>javapoet</artifactId>
+			<version>${javapoet.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.easytesting</groupId>
-			<artifactId>fest-assert</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>bsoneer</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-			<classifier>tests</classifier>
-		</dependency>
-		<dependency>
-			<groupId>com.google.testing.compile</groupId>
-			<artifactId>compile-testing</artifactId>
-			<scope>test</scope>
-			<!-- <exclusions> <exclusion> <groupId>com.sun</groupId> <artifactId>tools</artifactId> 
-				</exclusion> </exclusions> -->
-		</dependency>
-		<dependency>
-			<groupId>org.truth0</groupId>
-			<artifactId>truth</artifactId>
-			<scope>test</scope>
+			<version>${guava.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>bson</artifactId>
 			<version>${mongo.version}</version>
 			<scope>provided</scope>
+		</dependency>
+		
+		<!-- Tests -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.easytesting</groupId>
+			<artifactId>fest-assert</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.testing.compile</groupId>
+			<artifactId>compile-testing</artifactId>
+			<version>${compile-testing.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.truth0</groupId>
+			<artifactId>truth</artifactId>
+			<version>${truth.version}</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>
@@ -114,6 +115,9 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-source-plugin</artifactId>
 			</plugin>
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
