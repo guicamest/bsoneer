@@ -24,7 +24,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Marks class or given classes to generate a specific {@link org.bson.codecs.CollectibleCodec}
+ * Provides classes to generate a specific {@link org.bson.codecs.CollectibleCodec}
  */
 @Target({ TYPE, METHOD })
 @Retention(CLASS)
@@ -32,8 +32,8 @@ import java.lang.annotation.Target;
 public @interface Bsonees {
 
 	/**
-	 * @return Classes to generate a specific {@link org.bson.codecs.CollectibleCodec}.
-	 * 	If it is empty, the annotated class is used for Codec generation
+	 * Specified Bsonees must specify the value attribute
+	 * @return {@link com.sleepcamel.bsoneer.Bsonee}s to generate a specific {@link org.bson.codecs.CollectibleCodec}.
 	 */
 	Bsonee[] value() default { };
 }
