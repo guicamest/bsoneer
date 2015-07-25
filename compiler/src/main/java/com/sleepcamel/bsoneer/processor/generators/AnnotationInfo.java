@@ -1,9 +1,22 @@
+/*
+ * Copyright (C) 2015 Sleepcamel.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.sleepcamel.bsoneer.processor.generators;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
@@ -24,7 +37,6 @@ public class AnnotationInfo {
 
 	private List<TypeVariable> typeVariables = new ArrayList<TypeVariable>();
 	private List<WildcardType> typeWildcards = new ArrayList<WildcardType>();
-	private Map<TypeMirror, TypeMapping> rawTypeMappings = new HashMap<TypeMirror, TypeMapping>();
 
 	public AnnotationInfo(TypeMirror tm, String idProperty, boolean keepNonIdProperty,
 			TypeMirror idGeneratorType, boolean customGenerator) {
@@ -100,19 +112,6 @@ public class AnnotationInfo {
 		} else if (!typeAsString().equals(other.typeAsString()))
 			return false;
 		return true;
-	}
-
-	public void addSuperTypeInfo(TypeMirror superType, List<? extends TypeMirror> rawTypes,
-			List<? extends TypeMirror> declaredTypes) {
-		rawTypeMappings.put(superType, new TypeMapping(rawTypes, declaredTypes));
-	}
-
-	public TypeMirror getReplacedTypeFor(TypeMirror varSource, TypeMirror typeMirror) {
-		TypeMapping typeMapping = rawTypeMappings.get(varSource);
-		if (typeMapping == null) {
-			return null;
-		}
-		return typeMapping.getReplacement(typeMirror);
 	}
 
 }

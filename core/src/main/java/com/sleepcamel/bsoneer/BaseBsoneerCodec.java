@@ -183,17 +183,9 @@ public abstract class BaseBsoneerCodec<T> implements CollectibleCodec<T> {
 			if (bsoneeBaseSetter != null) {
 				bsoneeBaseSetter.set(instance, reader, decoderContext);
 			} else {
+				// TODO Check options whether to throw an exception or not. By default we skip it :)
 				logger.warn("No setter for " + fieldName);
-				BsonType bsonType = reader.getCurrentBsonType();
-				if (bsonType == BsonType.NULL) {
-					reader.readNull();
-					continue;
-				}
-				if (bsonType == BsonType.OBJECT_ID) {
-					reader.readObjectId();
-				} else {
-					logger.error("No setter for " + fieldName + " and cannot handle bsonType " + bsonType);
-				}
+				reader.skipValue();
 			}
 		}
 		reader.readEndDocument();

@@ -30,7 +30,6 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.SimpleElementVisitor6;
@@ -44,6 +43,7 @@ import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecGenerator;
 import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecProviderGenerator;
 import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecRegistryGenerator;
 import com.sleepcamel.bsoneer.processor.util.Util;
+import com.sleepcamel.bsoneer.processor.util.UtilsProvider;
 import com.squareup.javapoet.JavaFile;
 
 @SupportedAnnotationTypes({ "com.sleepcamel.bsoneer.Bsonee", "com.sleepcamel.bsoneer.Bsonees" })
@@ -58,6 +58,7 @@ public class BsonProcessor extends AbstractProcessor {
 	public static final String ID_GENERATOR_MUST_HAVE_DEFAULT_PUBLIC_CONSTRUCTOR = "IdGenerator must have a default"
 			+ " public constructor";
 	public static final String BSONEE_INSIDE_BSONESS_CANNOT_BE_EMPTY = "@Bsonee inside @Bsoness must have a value";
+	public static final String PROPERTY_DOES_NOT_HAVE_GETTER_SETTER_PAIR = "Property '%s' getter or setter NOT found";
 
 	SimpleElementVisitor6<Boolean, Void> noArgsConstructorVisitor = new SimpleElementVisitor6<Boolean, Void>() {
 		public Boolean visitExecutable(ExecutableElement t, Void p) {
@@ -75,11 +76,15 @@ public class BsonProcessor extends AbstractProcessor {
 	@Override
 	public boolean process(Set<? extends TypeElement> annotations,
 			RoundEnvironment roundEnv) {
+		UtilsProvider.update(processingEnv);
 		for (AnnotationInfo c : findBsoneedClassNames(roundEnv)) {
 			TypeElement type = processingEnv.getElementUtils().getTypeElement(c.typeAsString());
 			try {
-				createBsoneeCodecClass(type, c).writeTo(processingEnv.getFiler());
-				generated.add(c);
+				JavaFile createBsoneeCodecClass = createBsoneeCodecClass(type, c);
+				if ( createBsoneeCodecClass != null ){
+					createBsoneeCodecClass.writeTo(processingEnv.getFiler());
+					generated.add(c);
+				}
 			} catch (IOException e) {
 				error("Code gen failed: " + e, type);
 			}
@@ -201,20 +206,6 @@ public class BsonProcessor extends AbstractProcessor {
 	}
 
 	private boolean addTypeAndSuperTypes(Set<AnnotationInfo> toGenerate, AnnotationInfo annotationInfo) {
-		if (Util.getSuperType(annotationInfo.getType(), processingEnv) != null) {
-			List<? extends TypeMirror> directSupertypes = processingEnv.getTypeUtils()
-					.directSupertypes(annotationInfo.getType());
-
-			for (TypeMirror superType : directSupertypes) {
-				DeclaredType dtReplaced = (DeclaredType) superType;
-				TypeMirror erasured = processingEnv.getTypeUtils().erasure(superType);
-				DeclaredType dtRaw = (DeclaredType) processingEnv.getElementUtils().
-						getTypeElement(erasured.toString()).asType();
-
-				annotationInfo.addSuperTypeInfo(erasured, dtRaw.getTypeArguments(),
-						dtReplaced.getTypeArguments());
-			}
-		}
 
 		/*
 		ClassName superType = Util.getSuperType(tm, processingEnv);

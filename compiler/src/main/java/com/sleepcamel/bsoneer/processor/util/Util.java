@@ -17,10 +17,22 @@ package com.sleepcamel.bsoneer.processor.util;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Queue;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
@@ -39,6 +51,7 @@ import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleAnnotationValueVisitor6;
 import javax.lang.model.util.SimpleElementVisitor6;
+import javax.lang.model.util.Types;
 
 import com.google.common.base.Joiner;
 import com.squareup.javapoet.AnnotationSpec;
@@ -50,6 +63,31 @@ public class Util {
 
 	private static final String JAVA_LANG_ENUM = "java.lang.Enum<?>";
 
+	private static Map<String, TypeElement> collectionMappings = new HashMap<String, TypeElement>();
+	
+	static private void addCollectionMapping(Class<?> a, Class<?> b) {
+		addCollectionMapping(a.getCanonicalName(), b.getCanonicalName());
+	}
+
+	static private void addCollectionMapping(String aCanonicalName, String bCanonicalName) {
+		Elements elementUtils = UtilsProvider.getElements();
+		collectionMappings.put(UtilsProvider.getTypes().erasure(elementUtils.getTypeElement(aCanonicalName).asType()).toString(),
+				elementUtils.getTypeElement(bCanonicalName));
+	}
+	
+	static{
+		addCollectionMapping(BlockingDeque.class, LinkedBlockingDeque.class);
+		addCollectionMapping(BlockingQueue.class, LinkedBlockingDeque.class);
+		addCollectionMapping(Deque.class, LinkedBlockingDeque.class);
+		addCollectionMapping(Queue.class, LinkedBlockingDeque.class);
+		addCollectionMapping(Collection.class, ArrayList.class);
+		addCollectionMapping(List.class, ArrayList.class);
+		addCollectionMapping(Set.class, LinkedHashSet.class);
+		addCollectionMapping(SortedSet.class, TreeSet.class);
+		addCollectionMapping(NavigableSet.class, TreeSet.class);
+		addCollectionMapping("java.util.concurrent.TransferQueue", "java.util.concurrent.LinkedTransferQueue");
+	}
+	
 	private Util() {
 	}
 
@@ -370,4 +408,54 @@ public class Util {
 		return directSupertypes;
 	}
 
+	public static boolean isJavaCollection(TypeMirror key) {
+		if (key.getKind() != TypeKind.DECLARED) {
+			return false;
+		}
+		Types typeUtils = UtilsProvider.getTypes();
+		Elements elementUtils = UtilsProvider.getElements();
+		TypeMirror erasuredType = typeUtils.erasure(key);
+		return elementUtils.getPackageElement("java.util")
+				.equals(elementUtils.getPackageOf(typeUtils.asElement(erasuredType)))
+				&& typeUtils.isAssignable(erasuredType,
+				typeUtils.erasure(elementUtils.getTypeElement(Collection.class.getCanonicalName()).asType()));
+	}
+
+	public static TypeMirror collectionTypeArgument(TypeMirror tm) {
+		if ( tm instanceof DeclaredType ){
+			return ((DeclaredType) tm).getTypeArguments().get(0);
+		}
+		return tm;
+	}
+
+	public static TypeMirror getJavaCollectionClass(TypeMirror typeMirror,
+			boolean replaceInterfaceForImplementation, boolean collectionTypeArgumentIsVar) {
+		if (!isJavaCollection(typeMirror)) {
+			throw new RuntimeException("Type " + typeMirror + " is not a java collection");
+		}
+		Types typeUtils = UtilsProvider.getTypes();
+		Elements elementUtils = UtilsProvider.getElements();
+		
+		DeclaredType declared = (DeclaredType) typeMirror;
+		TypeMirror dt = collectionTypeArgument(declared);
+		TypeMirror erasured = typeUtils.erasure(typeMirror);
+		TypeElement typeElem = null;
+		if (ElementKind.INTERFACE.equals(declared.asElement().getKind()) && replaceInterfaceForImplementation) {
+			typeElem = collectionMappings.get(erasured.toString());
+		} else {
+			typeElem = elementUtils.getTypeElement(erasured.toString());
+		}
+		if (collectionTypeArgumentIsVar || dt.toString().equals("java.lang.Object") ) {
+			return typeUtils.erasure(typeElem.asType());
+		}
+		return typeUtils.getDeclaredType(typeElem, dt);
+	}
+
+	public static boolean isJavaMap(TypeMirror tm) {
+		Elements elements = UtilsProvider.getElements();
+		TypeElement typeElement = elements.getTypeElement(Map.class.getCanonicalName());
+		
+		Types types = UtilsProvider.getTypes();
+		return types.isAssignable(types.erasure(tm), types.erasure(typeElement.asType()));
+	}
 }
