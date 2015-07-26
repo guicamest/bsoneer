@@ -20,7 +20,7 @@
 	<groupId>com.sleepcamel.bsoneer</groupId>
 	<artifactId>bsonner-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<name>Bsoneer (Parent)</name>
 	<description>Bsoneer Parent</description>
 	<url>https://github.com/guicamest/bsoneer</url>
@@ -61,7 +61,7 @@
 		<url>http://github.com/guicamest/bsoneer/</url>
 		<connection>scm:git:git@github.com:guicamest/bsoneer.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/guicamest/bsoneer.git</developerConnection>
-		<tag>HEAD</tag>
+		<tag>bsonner-parent-0.1.0</tag>
 	</scm>
 
 	<issueManagement>
