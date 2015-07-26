@@ -34,7 +34,7 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.sleepcamel.bsoneer</groupId>
+			<groupId>com.sleepcamel.bsoneer.compiler</groupId>
 			<artifactId>bsoneer-compiler</artifactId>
 			<version>${project.version}</version>
 			<optional>true</optional>
