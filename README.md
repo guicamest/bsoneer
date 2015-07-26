@@ -14,12 +14,12 @@ dependency:
   <dependency>
     <groupId>com.sleepcamel.bsoneer</groupId>
     <artifactId>bsoneer</artifactId>
-    <version>0.0.1</version>
+    <version>0.1.0</version>
   </dependency>
   <dependency>
     <groupId>com.sleepcamel.bsoneer</groupId>
     <artifactId>bsoneer-compiler</artifactId>
-    <version>0.0.1</version>
+    <version>0.1.0</version>
     <optional>true</optional>
   </dependency>
 </dependencies>
@@ -30,6 +30,14 @@ artifacts, they can be downloaded directly via the [Maven Central Repository][ma
 
 Developer snapshots are available from [Sonatype's snapshot repository][bsoneer-snap], and
 are built on a clean build of the GitHub project's master branch.
+
+### Support for custom encoders/decoders
+
+Additional encoders/decoders for the bsoneer-compiler can be found at the [DeEncoders Repository][bsoneer-compiler-dencoders].
+
+### Support for custom property resolvers
+
+Additional property resolvers for the bsoneer-compiler can be found at the [Resolvers Repository][bsoneer-compiler-resolvers].
 
 License
 -------
@@ -51,4 +59,6 @@ License
 
  [mavensearch]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.sleepcamel.bsoneer%22
  [bsoneer-snap]: https://oss.sonatype.org/content/repositories/snapshots/com/sleepcamel/bsoneer/
+ [bsoneer-compiler-dencoders]: https://github.com/guicamest/bsoneer-compiler-dencoders/
+ [bsoneer-compiler-resolvers]: https://github.com/guicamest/bsoneer-compiler-propertyresolvers/
 
