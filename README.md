@@ -17,7 +17,7 @@ dependency:
     <version>0.1.0</version>
   </dependency>
   <dependency>
-    <groupId>com.sleepcamel.bsoneer</groupId>
+    <groupId>com.sleepcamel.bsoneer.compiler</groupId>
     <artifactId>bsoneer-compiler</artifactId>
     <version>0.1.0</version>
     <optional>true</optional>
