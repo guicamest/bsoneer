@@ -24,6 +24,7 @@
               <ul>
                 <li><a href="#download" class="menu download">Download <span class="version-tag">Latest</span></a></li>
                 <li><a href="http://github.com/guicamest/bsoneer" data-title="View GitHub Project" class="menu github"><img src="static/icon-github.png" alt="GitHub"/></a></li>
+				<li><a href="http://github.com/guicamest/bsoneer" data-title="View GitHub Project" class="menu github"><img src="static/logB1_white.png" alt="GitHub"/></a></li>
               </ul>
             </menu>
           </div>
@@ -385,7 +386,7 @@ public class App {
 }</pre>
 
             <h3 id="download">Download</h3>
-            <p><a href="https://search.maven.org/remote_content?g=com.sleepcamel.bsoneer&a=bsoneer&v=LATEST" class="dl core-version-href">&darr; <span class="version-tag">Latest</span> JAR</a> <a href="https://search.maven.org/remote_content?g=com.sleepcamel.bsoneer&a=bsoneer-compiler&v=LATEST" class="dl compiler-version-href">&darr; <span class="version-tag">Latest</span> Compiler JAR</a></p>
+            <p><a href="https://search.maven.org/remote_content?g=com.sleepcamel.bsoneer&a=bsoneer&v=LATEST" class="dl core-version-href">&darr; <span class="version-tag">Latest</span> JAR</a> <a href="https://search.maven.org/remote_content?g=com.sleepcamel.bsoneer.compiler&a=bsoneer-compiler&v=LATEST" class="dl compiler-version-href">&darr; <span class="version-tag">Latest</span> Compiler JAR</a></p>
             <p>You will need to include the Bsoneer JAR in your application's runtime.  In order to activate code generation you will need to include the compiler JAR in your build at compile time.</p>
             <p>The source code to the Bsoneer, its samples, and this website is <a href="http://github.com/guicamest/bsoneer">available on GitHub</a>.</p>
 
@@ -396,7 +397,7 @@ public class App {
   &lt;version><span class="version pln"><em>(insert latest version)</em></span>&lt;/version>
 &lt;/dependency>
 &lt;dependency>
-  &lt;groupId>com.sleepcamel.bsoneer&lt;/groupId>
+  &lt;groupId>com.sleepcamel.bsoneer.compiler&lt;/groupId>
   &lt;artifactId>bsoneer-compiler&lt;/artifactId>
   &lt;version><span class="version pln"><em>(insert latest version)</em></span>&lt;/version>
   &lt;optional>true&lt;/optional>
@@ -404,7 +405,7 @@ public class App {
 
             <h4>Gradle</h4>
             <pre class="prettyprint"> compile 'com.sleepcamel.bsoneer:bsoneer:<span class="version pln"><em>(insert latest version)</em></span>'
- compile 'com.sleepcamel.bsoneer:bsoneer-compiler:<span class="version pln"><em>(insert latest version)</em></span>'</pre>
+ compile 'com.sleepcamel.bsoneer.compiler:bsoneer-compiler:<span class="version pln"><em>(insert latest version)</em></span>'</pre>
  
 			<h3 id="ide">IDE Configuration</h4>
             <p>Some IDEs require additional configuration in order to enable annotation processing.</p>
@@ -502,7 +503,7 @@ limitations under the License.</pre>
           $('.version-tag').text('v' + version);
           $('.core-version-href').attr('href', url);
         });
-        $.fn.artifactVersion('com.sleepcamel.bsoneer', 'bsoneer-compiler', function(version, url) {
+        $.fn.artifactVersion('com.sleepcamel.bsoneer.compiler', 'bsoneer-compiler', function(version, url) {
           $('.compiler-version-href').attr('href', url);
         });
       });
