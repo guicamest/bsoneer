@@ -20,11 +20,13 @@
 	<parent>
 		<groupId>com.sleepcamel.bsoneer</groupId>
 		<artifactId>bsonner-parent</artifactId>
-		<version>0.0.3-SNAPSHOT</version>
+		<version>0.1.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>bsoneer-compiler</artifactId>
-	<name>Bsoneer Compiler</name>
+	<groupId>com.sleepcamel.bsoneer.compiler</groupId>
+	<artifactId>bsoneer-compiler-parent</artifactId>
+	<packaging>pom</packaging>
+	<name>Bsoneer Compiler Parent</name>
 	<description>Tools to generate Mongo Codecs for classes annotated with Bsoneer.</description>
 
 	<properties>
@@ -33,28 +35,19 @@
 		<truth.version>0.13</truth.version>
 		<compile-testing.version>0.7</compile-testing.version>
 	</properties>
+	
+	<modules>
+		<module>domain</module>
+		<module>codeprovider</module>
+		<module>resolver</module>
+		<module>compiler</module>
+	</modules>
 
 	<dependencies>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>bsoneer</artifactId>
-			<version>${project.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>com.squareup</groupId>
 			<artifactId>javapoet</artifactId>
 			<version>${javapoet.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>${guava.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>bson</artifactId>
-			<version>${mongo.version}</version>
-			<scope>provided</scope>
 		</dependency>
 		
 		<!-- Tests -->
@@ -84,7 +77,7 @@
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
 			<version>${mongo.version}</version>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 
@@ -92,66 +85,12 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>default-compile</id>
-						<goals>
-							<goal>compile</goal>
-						</goals>
-						<configuration>
-							<compilerArgument>-proc:none</compilerArgument>
-						</configuration>
-					</execution>
-					<execution>
-						<id>default-test-compile</id>
-						<goals>
-							<goal>testCompile</goal>
-						</goals>
-						<configuration>
-							<annotationProcessors>
-								<annotationProcessor>com.sleepcamel.bsoneer.processor.BsonProcessor</annotationProcessor>
-							</annotationProcessors>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<artifactId>maven-source-plugin</artifactId>
 			</plugin>
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<configuration>
-					<excludePackageNames>com.sleepcamel.bsoneer.processor.generators:com.sleepcamel.bsoneer.processor.generators.*</excludePackageNames>
-				</configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-invoker-plugin</artifactId>
-				<configuration>
-					<addTestClassPath>true</addTestClassPath>
-					<cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-					<cloneClean>true</cloneClean>
-					<profiles>
-						<profile>!release</profile>
-					</profiles>
-					<pomIncludes>
-						<pomInclude>*/pom.xml</pomInclude>
-					</pomIncludes>
-					<localRepositoryPath>${project.build.directory}/it-repo</localRepositoryPath>
-					<filterProperties>
-						<bsoneer.version>${project.version}</bsoneer.version>
-						<bsoneer.groupId>${project.groupId}</bsoneer.groupId>
-					</filterProperties>
-					<streamLogs>true</streamLogs>
-				</configuration>
-				<executions>
-					<execution>
-						<id>integration-test</id>
-						<goals>
-							<goal>install</goal>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -173,9 +112,6 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-checkstyle-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<artifactId>maven-javadoc-plugin</artifactId>
 			</plugin>
 			<plugin>
 				<artifactId>maven-release-plugin</artifactId>

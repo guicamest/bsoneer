@@ -8,7 +8,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.sleepcamel.bsoneer.Bsonee;
 
-@Bsonee(value=Person.class, id="name")
+@Bsonee(value=Person.class)
 public class PeopleRegistry {
 
 	public static void main(String[] args) {

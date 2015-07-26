@@ -26,7 +26,7 @@ import org.bson.codecs.IdGenerator;
 import org.bson.codecs.ObjectIdGenerator;
 
 /**
- * Marks class or given classes to generate a specific {@link org.bson.codecs.CollectibleCodec}
+ * Marks class to generate a specific {@link org.bson.codecs.CollectibleCodec}
  */
 @Target({ TYPE })
 @Retention(CLASS)
@@ -50,5 +50,8 @@ public @interface Bsonee {
 	 */
 	boolean keepIdProperty() default false;
 
+	/**
+	 * @return Custom idGenerator class for generating bson's "_id" field value 
+	 */
 	Class<? extends IdGenerator> idGenerator() default ObjectIdGenerator.class;
 }
