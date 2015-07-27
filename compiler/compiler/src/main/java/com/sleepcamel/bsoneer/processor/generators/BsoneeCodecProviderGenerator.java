@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.annotation.Generated;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 
 import com.sleepcamel.bsoneer.processor.BsonProcessor;
 import com.sleepcamel.bsoneer.processor.GeneratedClasses;
@@ -43,8 +44,9 @@ import com.squareup.javapoet.TypeVariableName;
 public class BsoneeCodecProviderGenerator {
 	private Set<ClassName> generated = new HashSet<ClassName>();
 	private final String basePackage;
+	private Set<TypeElement> additionalGeneratedCodecs;
 
-	public BsoneeCodecProviderGenerator(Set<AnnotationInfo> generated, ProcessingEnvironment processingEnv) {
+	public BsoneeCodecProviderGenerator(Set<AnnotationInfo> generated, Set<TypeElement> additionalGeneratedCodecs, ProcessingEnvironment processingEnv) {
 		String basePackage = null;
 		for (AnnotationInfo generatedClass : generated) {
 			ClassName entityClassName = ClassName.bestGuess(generatedClass.typeAsString());
@@ -53,6 +55,7 @@ public class BsoneeCodecProviderGenerator {
 			}
 			this.generated.add(entityClassName);
 		}
+		this.additionalGeneratedCodecs = additionalGeneratedCodecs;
 		this.basePackage = basePackage;
 	}
 
@@ -64,7 +67,7 @@ public class BsoneeCodecProviderGenerator {
 		        .addSuperinterface(CodeUtil.bsonCodecProviderTypeName())
 		        .addModifiers(PUBLIC).addAnnotation(AnnotationSpec.builder(Generated.class)
 		        		.addMember("value", "$S", BsonProcessor.class.getCanonicalName())
-		        		.build());;
+		        		.build());
 
 		addBaseConstructor(codecProviderBuilder);
 		addGetCodecMethod(codecProviderBuilder);
@@ -95,9 +98,18 @@ public class BsoneeCodecProviderGenerator {
 				.addJavadoc("{@inhericDoc}\n");
 
 		for (ClassName entityClassName : generated) {
-			ClassName bsoneerCodecClassName = Util.bsoneeName(entityClassName, GeneratedClasses.BSONEE_CODEC_SUFFIX);
+			ClassName bsoneerCodecClassName = Util.bsoneeName(entityClassName, GeneratedClasses.BSONEE_COLLECTIBLE_CODEC_SUFFIX);
 			methodSpec.beginControlFlow("if (clazz == $T.class)", entityClassName);
 			methodSpec.addStatement("return (Codec<T>) new $T(registry)", bsoneerCodecClassName);
+			methodSpec.endControlFlow();
+		}
+		
+
+		for (TypeElement typeElement : additionalGeneratedCodecs) {
+			ClassName entityClassName = ClassName.get(typeElement);
+			ClassName bsoneerCodecClassName = Util.bsoneeName(entityClassName, GeneratedClasses.BSONEE_CODEC_SUFFIX);
+			methodSpec.beginControlFlow("if (clazz == $T.class)", entityClassName);
+			methodSpec.addStatement("return (Codec<T>) new $T()", bsoneerCodecClassName);
 			methodSpec.endControlFlow();
 		}
 

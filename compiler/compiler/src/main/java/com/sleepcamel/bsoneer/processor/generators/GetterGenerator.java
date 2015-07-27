@@ -63,7 +63,7 @@ class GetterGenerator {
 		codeProviders.add(new PassThroughEncodeCodeProvider());
 	}
 
-	public void writeBody(Builder p) {
+	protected void writeBody(Builder p) {
 		for (Property property : bean.getOwnAndInheritedProperties()) {
 			TypeMirror key = property.getResolvedType();
 			
@@ -75,12 +75,7 @@ class GetterGenerator {
 						.builder();
 				codeBuilder.addStatement("writer.writeName(\"$L\")", bsonName);
 				
-				for(EncodeCodeProvider scp:codeProviders){
-					if ( scp.applies(property) ){
-						scp.putEncodeCode(codeBuilder, property.getResolvedType(), codeProviders, "value." + property.getGetterCall());
-						break;
-					}
-				}
+				writeBody(codeBuilder, key, "value." + property.getGetterCall());
 
 				CodeBlock codeBlock = codeBuilder.build();
 				if ("_id".equals(bsonName)) {
@@ -91,6 +86,15 @@ class GetterGenerator {
 				} else {
 					writeCheckingForNull(p, accessName, codeBlock);
 				}
+			}
+		}
+	}
+	
+	protected void writeBody(com.squareup.javapoet.CodeBlock.Builder codeBuilder, TypeMirror typeMirror, String variable) {
+		for(EncodeCodeProvider scp:codeProviders){
+			if ( scp.applies(typeMirror) ){
+				scp.putEncodeCode(codeBuilder, typeMirror, codeProviders, variable);
+				break;
 			}
 		}
 	}

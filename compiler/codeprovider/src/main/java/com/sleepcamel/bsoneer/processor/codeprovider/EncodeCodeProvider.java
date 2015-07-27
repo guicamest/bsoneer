@@ -29,6 +29,7 @@ public interface EncodeCodeProvider {
 	 * @param property
 	 * @return Whether this encoder applies for that {@link com.sleepcamel.bsoneer.processor.domain.Property} 
 	 */
+	@Deprecated
 	public boolean applies(Property property);
 	
 	/**

@@ -18,7 +18,9 @@ package com.sleepcamel.bsoneer.processor;
 public final class GeneratedClasses {
 	private static final String SEPARATOR = "Bsonee";
 	public static final String BSONEE_WRAPPER_SUFFIX = SEPARATOR + "Bson";
-	public static final String BSONEE_CODEC_SUFFIX = SEPARATOR + "Codec";
+	public static final String CODEC_SUFFIX = "Codec";
+	public static final String BSONEE_CODEC_SUFFIX = SEPARATOR + CODEC_SUFFIX;
+	public static final String BSONEE_COLLECTIBLE_CODEC_SUFFIX = SEPARATOR + "Collectible" + CODEC_SUFFIX;
 
 	private GeneratedClasses() {
 	}

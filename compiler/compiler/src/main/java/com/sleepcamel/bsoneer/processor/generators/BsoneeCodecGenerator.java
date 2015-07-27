@@ -18,15 +18,17 @@ package com.sleepcamel.bsoneer.processor.generators;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Generated;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
-import javax.tools.Diagnostic;
 
 import com.sleepcamel.bsoneer.processor.BsonProcessor;
 import com.sleepcamel.bsoneer.processor.GeneratedClasses;
@@ -47,18 +49,19 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
-public class BsoneeCodecGenerator {
+public class BsoneeCodecGenerator extends CodecGenerator {
 
-	private TypeElement type;
-	private ProcessingEnvironment processingEnv;
 	private AnnotationInfo ai;
 	private TypeElement bsoneerIdGenerator;
 	private PropertyResolvers resolvers = new PropertyResolvers();
+	private Set<TypeElement> generatedCodecs;
+	private Map<TypeElement, JavaFile> codecsToGenerate;
 
-	public BsoneeCodecGenerator(TypeElement type, AnnotationInfo ai, ProcessingEnvironment processingEnv) {
-		this.type = type;
+	public BsoneeCodecGenerator(TypeElement type, ProcessingEnvironment processingEnv, AnnotationInfo ai, Map<TypeElement, JavaFile> codecsToGenerate, Set<TypeElement> generatedCodecs) {
+		super(type, processingEnv);
 		this.ai = ai;
-		this.processingEnv = processingEnv;
+		this.codecsToGenerate = codecsToGenerate;
+		this.generatedCodecs = generatedCodecs;
 		bsoneerIdGenerator = processingEnv.getElementUtils()
 				.getTypeElement("com.sleepcamel.bsoneer.IdGenerator");
 	}
@@ -72,7 +75,7 @@ public class BsoneeCodecGenerator {
 				.get(ClassName.get(baseCodecType), entityClassName);
 
 		ClassName bsoneerCodecClassName = Util.bsoneeName(entityClassName,
-				GeneratedClasses.BSONEE_CODEC_SUFFIX);
+				GeneratedClasses.BSONEE_COLLECTIBLE_CODEC_SUFFIX);
 
 		TypeSpec.Builder codecBuilder = TypeSpec.classBuilder(bsoneerCodecClassName.simpleName())
 		        .addJavadoc(ProcessorJavadocs.GENERATED_BY_BSONEER)
@@ -81,8 +84,6 @@ public class BsoneeCodecGenerator {
 		        		.addMember("value", "$S", BsonProcessor.class.getCanonicalName())
 		        		.build());;
 
-//		org.bson.BsonBinarySubType
-//		org.bson.BsonType
 		Bean bean = new Bean(type);
 		bean.resolveHierarchyRawTypes();
 		resolvers.resolveProperties(bean);
@@ -110,6 +111,17 @@ public class BsoneeCodecGenerator {
 		
 		addEncodeMethod(codecBuilder, entityClassName, bean);
 		addDecodeCode(codecBuilder, entityClassName, bean);
+		
+		for(Property p:bean.getProperties().values()){
+			TypeMirror resolvedType = p.getResolvedType();
+			if ( resolvedType instanceof DeclaredType ){
+				Element dt = ((DeclaredType) resolvedType).asElement();
+				if ( dt != null && dt instanceof TypeElement && !generatedCodecs.contains(dt) && !codecsToGenerate.containsKey(dt) ){
+					TypeElement te = (TypeElement) dt;
+					codecsToGenerate.put(te, new CodecGenerator(te, processingEnv).getJavaFile());
+				}
+			}
+		}
 
 		return JavaFile.builder(bsoneerCodecClassName.packageName(), codecBuilder.build())
 				.addFileComment(ProcessorJavadocs.GENERATED_BY_BSONEER)
@@ -125,16 +137,6 @@ public class BsoneeCodecGenerator {
 				.addModifiers(Modifier.PUBLIC)
 				.addStatement("super(registry, new $T())", ClassName.get(ai.getIdGeneratorType()))
 				.build());
-	}
-
-	private void addEncoderClassMethod(com.squareup.javapoet.TypeSpec.Builder codecBuilder, ClassName entityClassName) {
-		TypeName clazzName = ParameterizedTypeName.get(ClassName.get(Class.class), entityClassName);
-		Builder methodSpec = MethodSpec.methodBuilder("getEncoderClass")
-				.addModifiers(Modifier.PUBLIC)
-				.returns(clazzName)
-				.addJavadoc("{@inhericDoc}\n");
-		methodSpec.addStatement("return $T.class", entityClassName);
-		codecBuilder.addMethod(methodSpec.build());
 	}
 
 	private void addEncodeMethod(com.squareup.javapoet.TypeSpec.Builder codecBuilder, ClassName entityClassName, Bean bean) {
@@ -190,13 +192,4 @@ public class BsoneeCodecGenerator {
 				typeUtils.erasure(bsoneerIdGenerator.asType()));
 	}
 
-	private void warn(String msg, Element element) {
-		processingEnv.getMessager().printMessage(Diagnostic.Kind.MANDATORY_WARNING, msg,
-				element);
-	}
-	
-	private void error(String msg, Element element) {
-		processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, msg,
-				element);
-	}
 }

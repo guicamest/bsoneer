@@ -16,9 +16,12 @@
 package com.sleepcamel.bsoneer.processor;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -67,6 +70,8 @@ public class BsonProcessor extends AbstractProcessor {
 	};
 
 	private Set<AnnotationInfo> generated = new LinkedHashSet<AnnotationInfo>();
+	private Set<TypeElement> generatedCodecs = new LinkedHashSet<TypeElement>();
+	private Map<TypeElement, JavaFile> codecsToGenerate = new HashMap<TypeElement, JavaFile>();
 
 	@Override
 	public SourceVersion getSupportedSourceVersion() {
@@ -89,7 +94,23 @@ public class BsonProcessor extends AbstractProcessor {
 				error("Code gen failed: " + e, type);
 			}
 		}
-		if (roundEnv.processingOver() && !generated.isEmpty()) {
+		Iterator<Entry<TypeElement, JavaFile>> entrySet = codecsToGenerate.entrySet().iterator();
+		while(entrySet.hasNext()){
+			Entry<TypeElement, JavaFile> codecToGenerate = entrySet.next();
+			entrySet.remove();
+			TypeElement type = codecToGenerate.getKey();
+			try {
+				note("Generating additional Codec...", type);
+				JavaFile codecClass = codecToGenerate.getValue();
+				if ( codecClass != null ){
+					codecClass.writeTo(processingEnv.getFiler());
+					generatedCodecs.add(type);
+				}
+			} catch (IOException e) {
+				error("Code gen failed: " + e, type);
+			}
+		}
+		if (roundEnv.processingOver() && (!generated.isEmpty() || !generatedCodecs.isEmpty())) {
 			try {
 				createBsoneeCodecProviderClass().writeTo(processingEnv.getFiler());
 				createBsoneeCodecRegistryClass().writeTo(processingEnv.getFiler());
@@ -232,12 +253,12 @@ public class BsonProcessor extends AbstractProcessor {
 
 	private JavaFile createBsoneeCodecClass(TypeElement type, AnnotationInfo ai) {
 		note("Generating Codec...", type);
-		return new BsoneeCodecGenerator(type, ai, processingEnv).getJavaFile();
+		return new BsoneeCodecGenerator(type, processingEnv, ai, codecsToGenerate, generatedCodecs).getJavaFile();
 	}
-
+	
 	private JavaFile createBsoneeCodecProviderClass() {
 		note("Generating Codec Provider");
-		return new BsoneeCodecProviderGenerator(generated, processingEnv).getJavaFile();
+		return new BsoneeCodecProviderGenerator(generated, generatedCodecs, processingEnv).getJavaFile();
 	}
 
 	private JavaFile createBsoneeCodecRegistryClass() {
