@@ -36,12 +36,10 @@ public class $$CLASS_NAME$$BsoneeCollectibleCodec extends BaseBsoneerCodec<$$CLA
     @Override()
     @SuppressWarnings({"unchecked", "rawtypes"})
     protected void encodeVariables(BsonWriter writer, $$CLASS_NAME$$ value, EncoderContext encoderContext) {
-        if (encoderContext.isEncodingCollectibleDocument()) {
-            writer.writeName("_id");
-            Object vid = idGenerator.generate();
-            Codec cid = registry.get(vid.getClass());
-            encoderContext.encodeWithChildContext(cid, writer, vid);
-        }
+        writer.writeName("_id");
+        Object vid = idGenerator.generate();
+        Codec cid = registry.get(vid.getClass());
+		encoderContext.encodeWithChildContext(cid, writer, vid);
         writer.writeName("a");
         writer.writeInt32(value.a);
         super.encodeVariables(writer, value, encoderContext);

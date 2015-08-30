@@ -101,12 +101,10 @@ class GetterGenerator {
 
 	public CodeBlock writeAsId(CodeBlock cb, boolean includeName) {
 		com.squareup.javapoet.CodeBlock.Builder builder = CodeBlock.builder();
-		builder.beginControlFlow("if (encoderContext.isEncodingCollectibleDocument())");
 		if (includeName) {
 			builder.addStatement("writer.writeName(\"_id\")");
 		}
 		builder.add(cb);
-		builder.endControlFlow();
 		return builder.build();
 	}
 
