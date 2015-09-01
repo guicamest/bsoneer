@@ -47,6 +47,7 @@ import com.sleepcamel.bsoneer.processor.generators.BsoneeBsonGenerator;
 import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecGenerator;
 import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecProviderGenerator;
 import com.sleepcamel.bsoneer.processor.generators.BsoneeCodecRegistryGenerator;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 
 @SupportedAnnotationTypes({ "com.sleepcamel.bsoneer.Bsonee", "com.sleepcamel.bsoneer.Bsonees" })

@@ -28,7 +28,6 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Types;
 
 import com.sleepcamel.bsoneer.processor.BsonProcessor;
 import com.sleepcamel.bsoneer.processor.GeneratedClasses;
@@ -52,7 +51,6 @@ import com.squareup.javapoet.TypeSpec;
 public class BsoneeCodecGenerator extends CodecGenerator {
 
 	private AnnotationInfo ai;
-	private TypeElement bsoneerIdGenerator;
 	private PropertyResolvers resolvers = new PropertyResolvers();
 	private Set<TypeElement> generatedCodecs;
 	private Map<TypeElement, JavaFile> codecsToGenerate;
@@ -62,8 +60,6 @@ public class BsoneeCodecGenerator extends CodecGenerator {
 		this.ai = ai;
 		this.codecsToGenerate = codecsToGenerate;
 		this.generatedCodecs = generatedCodecs;
-		bsoneerIdGenerator = processingEnv.getElementUtils()
-				.getTypeElement("com.sleepcamel.bsoneer.IdGenerator");
 	}
 
 	public JavaFile getJavaFile() {
@@ -152,15 +148,17 @@ public class BsoneeCodecGenerator extends CodecGenerator {
 		GetterGenerator getterGenerator = new GetterGenerator(processingEnv, bean);
 		if (!ai.hasCustomId()) {
 			com.squareup.javapoet.CodeBlock.Builder cb = CodeBlock.builder();
-			if (customGeneratorIsBsonned()) {
-				cb.addStatement("Object vid = (($T)idGenerator).generate(value)",
-						ClassName.get(bsoneerIdGenerator));
+			cb.beginControlFlow("");
+			TypeMirror generatorReturnTypeMirror = ai.getGeneratorReturnTypeMirror();
+			cb.add("$T vid = ", generatorReturnTypeMirror);
+			if (ai.customGeneratorIsBsonned()) {
+				cb.add("(($T)idGenerator).generate(value)", ClassName.get(ai.getIdGeneratorType()));
 			} else {
-				cb.addStatement("Object vid = idGenerator.generate()");
+				cb.add("idGenerator.generate()");
 			}
-			cb.addStatement("$T cid = registry.get(vid.getClass())",
-					CodeUtil.bsonCodecTypeName());
-			cb.addStatement("encoderContext.encodeWithChildContext(cid, writer, vid)");
+			cb.add(";\n");
+			getterGenerator.writeBody(cb, generatorReturnTypeMirror, "vid");
+			cb.endControlFlow();
 			methodSpec.addCode(getterGenerator.writeAsId(cb.build(), true));
 		}
 
@@ -180,16 +178,6 @@ public class BsoneeCodecGenerator extends CodecGenerator {
 
 		SetterGenerator setterGenerator = new SetterGenerator(processingEnv, bean);
 		setterGenerator.writeBody(codecBuilder, entityClassName);
-	}
-
-	private boolean customGeneratorIsBsonned() {
-		if (!ai.hasCustomGenerator()) {
-			return false;
-		}
-		TypeMirror idGeneratorType = ai.getIdGeneratorType();
-		Types typeUtils = processingEnv.getTypeUtils();
-		return typeUtils.isAssignable(typeUtils.erasure(idGeneratorType),
-				typeUtils.erasure(bsoneerIdGenerator.asType()));
 	}
 
 }

@@ -2,6 +2,7 @@
 import com.sleepcamel.bsoneer.BaseBsoneerCodec;
 import com.sleepcamel.bsoneer.BsoneeBaseSetter;
 import java.lang.Class;
+import java.lang.Object;
 import java.lang.Override;
 import java.lang.SuppressWarnings;
 import javax.annotation.Generated;
@@ -37,9 +38,11 @@ public class $$CLASS_NAME$$BsoneeCollectibleCodec extends BaseBsoneerCodec<$$CLA
     @SuppressWarnings({"unchecked", "rawtypes"})
     protected void encodeVariables(BsonWriter writer, $$CLASS_NAME$$ value, EncoderContext encoderContext) {
         writer.writeName("_id");
-        Object vid = idGenerator.generate();
-        Codec cid = registry.get(vid.getClass());
-		encoderContext.encodeWithChildContext(cid, writer, vid);
+        {
+	        Object vid = idGenerator.generate();
+	        Codec c = registry.get(vid.getClass());
+			encoderContext.encodeWithChildContext(c, writer, vid);
+		}
         writer.writeName("a");
         writer.writeInt32(value.a);
         super.encodeVariables(writer, value, encoderContext);

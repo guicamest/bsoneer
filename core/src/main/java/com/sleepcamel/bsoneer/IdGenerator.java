@@ -15,7 +15,7 @@
  */
 package com.sleepcamel.bsoneer;
 
-public abstract class IdGenerator<T> implements org.bson.codecs.IdGenerator {
+public abstract class IdGenerator<T,ID> implements org.bson.codecs.IdGenerator {
 
 	private T instance;
 
@@ -23,7 +23,7 @@ public abstract class IdGenerator<T> implements org.bson.codecs.IdGenerator {
 		this.instance = instance;
 	}
 
-	public abstract Object generate(T instance);
+	public abstract ID generate(T instance);
 
-	public Object generate() {return generate(instance);}
+	public ID generate() {return generate(instance);}
 }

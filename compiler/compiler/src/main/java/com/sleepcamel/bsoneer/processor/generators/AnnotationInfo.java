@@ -18,13 +18,18 @@ package com.sleepcamel.bsoneer.processor.generators;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 
 import com.google.common.base.Strings;
+import com.sleepcamel.bsoneer.processor.domain.UtilsProvider;
 import com.sleepcamel.bsoneer.processor.util.Util;
 
 public class AnnotationInfo {
@@ -34,9 +39,12 @@ public class AnnotationInfo {
 	private boolean keepNonIdProperty;
 	private TypeMirror idGeneratorType;
 	private boolean customGenerator;
-
+	
+	private static final TypeMirror DEFAULT_RETURN_TYPE = UtilsProvider.getElements().getTypeElement(Object.class.getCanonicalName()).asType();
+	
 	private List<TypeVariable> typeVariables = new ArrayList<TypeVariable>();
 	private List<WildcardType> typeWildcards = new ArrayList<WildcardType>();
+	private TypeMirror generatorReturnTypeMirror = DEFAULT_RETURN_TYPE;
 
 	public AnnotationInfo(TypeMirror tm, String idProperty, boolean keepNonIdProperty,
 			TypeMirror idGeneratorType, boolean customGenerator) {
@@ -59,6 +67,47 @@ public class AnnotationInfo {
 		this.customGenerator = customGenerator;
 		this.idProperty = Strings.nullToEmpty(idProperty).trim();
 		this.keepNonIdProperty = keepNonIdProperty;
+		analyzeGenerator();
+	}
+
+	private void analyzeGenerator() {
+		if (!hasCustomGenerator()) {
+			return ;
+		}
+		Types types = UtilsProvider.getTypes();
+		Elements elements = UtilsProvider.getElements();
+		DeclaredType bsoneerIdGenerator = (DeclaredType)elements
+				.getTypeElement("com.sleepcamel.bsoneer.IdGenerator").asType();
+		
+		DeclaredType idGeneratorType = (DeclaredType) getIdGeneratorType();
+		if ( types.isAssignable(types.erasure(idGeneratorType),
+				types.erasure(bsoneerIdGenerator)) ){
+			resolveGeneratorReturnType(bsoneerIdGenerator, 
+					idGeneratorType,
+					elements,
+					types);
+		}
+	}
+
+	private void resolveGeneratorReturnType(DeclaredType bsoneerIdGenerator,
+			DeclaredType declaredGenerator, Elements elements, Types types) {
+		Element bsoneerIdGeneratorAsElement = bsoneerIdGenerator.asElement();
+		Element declaredGeneratorAsElement = declaredGenerator.asElement();
+		System.out.println("TE "+bsoneerIdGeneratorAsElement);
+		System.out.println("TEG "+declaredGeneratorAsElement);
+		System.out.println("TE TM "+bsoneerIdGenerator);
+		System.out.println("TEG TM "+declaredGenerator);
+		
+		if (!bsoneerIdGeneratorAsElement.equals(declaredGeneratorAsElement)) {
+			TypeElement typeElement = (TypeElement) declaredGeneratorAsElement;
+			DeclaredType superclass = (DeclaredType)typeElement.getSuperclass();
+			resolveGeneratorReturnType(bsoneerIdGenerator, superclass, elements, types);
+		}else{
+			TypeMirror typeMirror = declaredGenerator.getTypeArguments().get(1);
+			if (TypeKind.DECLARED.equals(typeMirror.getKind())){
+				generatorReturnTypeMirror = typeMirror;
+			}
+		}
 	}
 
 	public boolean hasCustomId() {
@@ -85,8 +134,16 @@ public class AnnotationInfo {
 		return tm;
 	}
 
+	public TypeMirror getGeneratorReturnTypeMirror() {
+		return generatorReturnTypeMirror;
+	}
+
 	public String typeAsString() {
 		return Util.rawTypeToString(tm, '.');
+	}
+	
+	public boolean customGeneratorIsBsonned() {
+		return generatorReturnTypeMirror != DEFAULT_RETURN_TYPE;
 	}
 
 	@Override

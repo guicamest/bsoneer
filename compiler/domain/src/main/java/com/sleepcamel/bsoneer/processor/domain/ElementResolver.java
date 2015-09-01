@@ -28,7 +28,7 @@ import com.google.common.base.Optional;
 public class ElementResolver extends
 		SimpleTypeVisitor7<Optional<TypeElement>, Void> {
 
-	protected ElementResolver(){
+	public ElementResolver(){
 		super(Optional.<TypeElement>fromNullable(null));
 	}
 	
