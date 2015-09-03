@@ -18,14 +18,15 @@ package com.sleepcamel.bsoneer.processor.generators;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
 import javax.lang.model.type.WildcardType;
-import javax.lang.model.util.Elements;
+import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Types;
 
 import com.google.common.base.Strings;
@@ -75,37 +76,32 @@ public class AnnotationInfo {
 			return ;
 		}
 		Types types = UtilsProvider.getTypes();
-		Elements elements = UtilsProvider.getElements();
-		DeclaredType bsoneerIdGenerator = (DeclaredType)elements
-				.getTypeElement("com.sleepcamel.bsoneer.IdGenerator").asType();
+		TypeElement bsoneerIdGenerator = UtilsProvider.getElements()
+				.getTypeElement("com.sleepcamel.bsoneer.IdGenerator");
 		
 		DeclaredType idGeneratorType = (DeclaredType) getIdGeneratorType();
 		if ( types.isAssignable(types.erasure(idGeneratorType),
-				types.erasure(bsoneerIdGenerator)) ){
+				types.erasure(bsoneerIdGenerator.asType())) ){
 			resolveGeneratorReturnType(bsoneerIdGenerator, 
 					idGeneratorType,
-					elements,
 					types);
 		}
 	}
 
-	private void resolveGeneratorReturnType(DeclaredType bsoneerIdGenerator,
-			DeclaredType declaredGenerator, Elements elements, Types types) {
-		Element bsoneerIdGeneratorAsElement = bsoneerIdGenerator.asElement();
-		Element declaredGeneratorAsElement = declaredGenerator.asElement();
-		System.out.println("TE "+bsoneerIdGeneratorAsElement);
-		System.out.println("TEG "+declaredGeneratorAsElement);
-		System.out.println("TE TM "+bsoneerIdGenerator);
-		System.out.println("TEG TM "+declaredGenerator);
+	private void resolveGeneratorReturnType(TypeElement bsoneerIdGenerator,
+			DeclaredType declaredGenerator, Types types) {
 		
-		if (!bsoneerIdGeneratorAsElement.equals(declaredGeneratorAsElement)) {
-			TypeElement typeElement = (TypeElement) declaredGeneratorAsElement;
-			DeclaredType superclass = (DeclaredType)typeElement.getSuperclass();
-			resolveGeneratorReturnType(bsoneerIdGenerator, superclass, elements, types);
-		}else{
-			TypeMirror typeMirror = declaredGenerator.getTypeArguments().get(1);
-			if (TypeKind.DECLARED.equals(typeMirror.getKind())){
-				generatorReturnTypeMirror = typeMirror;
+		List<ExecutableElement> methodsIn = ElementFilter.methodsIn(bsoneerIdGenerator.getEnclosedElements());
+		if ( methodsIn != null ){
+			for(ExecutableElement execElem:methodsIn){
+				if (execElem.getSimpleName().contentEquals("generate") && !execElem.getParameters().isEmpty()) {
+					ExecutableType asMemberOf = (ExecutableType) types.asMemberOf(declaredGenerator, execElem);
+					TypeMirror returnType = asMemberOf.getReturnType();
+					if (TypeKind.DECLARED.equals(returnType.getKind())) {
+						generatorReturnTypeMirror = returnType;
+					}
+					return;
+				}
 			}
 		}
 	}
