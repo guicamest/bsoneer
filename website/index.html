@@ -9,7 +9,7 @@
     <link href="static/bootstrap-combined.min.css" rel="stylesheet">
     <link href="static/app.css" rel="stylesheet">
     <link href="static/app-theme.css" rel="stylesheet">
-    <link href="http://fonts.googleapis.com/css?family=Roboto:400,300italic,100,100italic,300" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,300italic,100,100italic,300" rel="stylesheet" type="text/css">
     <!--[if lt IE 9]><script src="static/html5shiv.min.js"></script><![endif]-->
   </head>
   <body data-target=".content-nav">
@@ -23,8 +23,8 @@
             <menu>
               <ul>
                 <li><a href="#download" class="menu download">Download <span class="version-tag">Latest</span></a></li>
-                <li><a href="http://github.com/guicamest/bsoneer" data-title="View GitHub Project" class="menu github"><img src="static/icon-github.png" alt="GitHub"/></a></li>
-				<li><a href="http://github.com/guicamest/bsoneer" data-title="View GitHub Project" class="menu github"><img src="static/logB1_white.png" alt="GitHub"/></a></li>
+                <li><a href="https://github.com/guicamest/bsoneer" data-title="View GitHub Project" class="menu github"><img src="static/icon-github.png" alt="GitHub"/></a></li>
+				<li><a href="https://github.com/guicamest/bsoneer" data-title="View GitHub Project" class="menu github"><img src="static/logB1_white.png" alt="GitHub"/></a></li>
               </ul>
             </menu>
           </div>
@@ -45,7 +45,7 @@
           <div class="span9">
             <h3 id="introduction">Introduction</h3>
 
-            <p>The <strong>new</strong> <a href="http://mongodb.github.io/mongo-java-driver/">MongoDB Java Driver</a> brings the new <code>org.bson.Bson</code>, <code>org.bson.codecs.Codec</code> and <code>org.bson.codecs.CollectibleCodec</code> interfaces. There are <a href="http://docs.mongodb.org/ecosystem/drivers/java/#third-party-frameworks-and-libraries">several</a> frameworks and libraries for <strong>runtime</strong> POJO mapping, <strong>but</strong>, isn't it better to make use of the new interfaces and <a href="http://docs.oracle.com/javase/6/docs/api/javax/annotation/processing/package-summary.html">annotation-processing</a> to generate specific mapping codecs at <strong>compile-time</strong> and reduce POJO mapping on runtime?
+            <p>The <strong>new</strong> <a href="https://mongodb.github.io/mongo-java-driver/">MongoDB Java Driver</a> brings the new <code>org.bson.Bson</code>, <code>org.bson.codecs.Codec</code> and <code>org.bson.codecs.CollectibleCodec</code> interfaces. There are <a href="https://docs.mongodb.org/ecosystem/drivers/java/#third-party-frameworks-and-libraries">several</a> frameworks and libraries for <strong>runtime</strong> POJO mapping, <strong>but</strong>, isn't it better to make use of the new interfaces and <a href="https://docs.oracle.com/javase/6/docs/api/javax/annotation/processing/package-summary.html">annotation-processing</a> to generate specific mapping codecs at <strong>compile-time</strong> and reduce POJO mapping on runtime?
 
             <p>That's were Bsoneer comes into play. Just by annotating your POJO with the <code>@Bsonee</code> annotation, a specific <code>CollectibleCodec</code> for that POJO is generated to help with its encoding/decoding to BSON.</p> In addition, a <code>CodecProvider</code> is generated to provide the generated <code>Codec</code>s, a registry helper <code>BsoneeCodecRegistry</code> to ease codec registration to Mongo and <code>BsoneeBson</code> to get a Bson from a POJO.
 
@@ -388,7 +388,7 @@ public class App {
             <h3 id="download">Download</h3>
             <p><a href="https://search.maven.org/remote_content?g=com.sleepcamel.bsoneer&a=bsoneer&v=LATEST" class="dl core-version-href">&darr; <span class="version-tag">Latest</span> JAR</a> <a href="https://search.maven.org/remote_content?g=com.sleepcamel.bsoneer.compiler&a=bsoneer-compiler&v=LATEST" class="dl compiler-version-href">&darr; <span class="version-tag">Latest</span> Compiler JAR</a></p>
             <p>You will need to include the Bsoneer JAR in your application's runtime.  In order to activate code generation you will need to include the compiler JAR in your build at compile time.</p>
-            <p>The source code to the Bsoneer, its samples, and this website is <a href="http://github.com/guicamest/bsoneer">available on GitHub</a>.</p>
+            <p>The source code to the Bsoneer, its samples, and this website is <a href="https://github.com/guicamest/bsoneer">available on GitHub</a>.</p>
 
             <h4>Maven</h4>
             <pre class="prettyprint">&lt;dependency>
@@ -442,7 +442,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -462,7 +462,7 @@ limitations under the License.</pre>
               </ul>
               <ul class="nav nav-pills nav-stacked secondary">
                 <li><a href="javadoc/index.html">Javadoc</a></li>
-                <li><a href="http://stackoverflow.com/questions/tagged/bsoneer?sort=active">StackOverflow</a></li>
+                <li><a href="https://stackoverflow.com/questions/tagged/bsoneer?sort=active">StackOverflow</a></li>
               </ul>
             </div>
           </div>
@@ -470,7 +470,7 @@ limitations under the License.</pre>
       </div>
     </section>
 	<a href="https://github.com/guicamest/bsoneer"><img style="position: absolute; top: 0; right: 0; border: 0; z-index:100;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="static/bootstrap.min.js"></script>
     <script src="static/jquery.smooth-scroll.min.js"></script>
     <script src="static/jquery-maven-artifact.min.js"></script>
